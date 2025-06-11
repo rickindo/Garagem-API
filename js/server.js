@@ -3,124 +3,133 @@ import express from 'express';
 import dotenv from 'dotenv';
 import axios from 'axios';
 
-// Carrega variáveis de ambiente do arquivo .env
-// Certifique-se de que existe um arquivo .env na raiz do projeto com:
-// OPENWEATHER_API_KEY=sua_chave_aqui
-// PORT=3000 (opcional, o padrão será 3000 se não definido)
 dotenv.config();
 
-// Inicializa o aplicativo Express
 const app = express();
-
-// Define a porta. Usa a variável de ambiente PORT se disponível, senão 3000.
 const port = process.env.PORT || 3000;
 const apiKey = process.env.OPENWEATHER_API_KEY;
 
+
+// --- INÍCIO DAS MODIFICAÇÕES (ATIVIDADE B2.P1.A8) ---
+
+// 1. Simulação de um "Banco de Dados" em memória para as dicas
+const dicasManutencaoGerais = [
+    { id: 1, dica: "Verifique o nível do óleo do motor regularmente." },
+    { id: 2, dica: "Calibre os pneus semanalmente para a pressão recomendada." },
+    { id: 3, dica: "Confira o nível do fluido de arrefecimento (radiador)." },
+    { id: 4, dica: "Teste os freios em um local seguro após iniciar a viagem." },
+    { id: 5, dica: "Mantenha os vidros, espelhos e faróis sempre limpos." }
+];
+
+const dicasPorTipo = {
+    carro: [
+        { id: 101, dica: "Faça o rodízio dos pneus a cada 10.000 km para um desgaste uniforme." },
+        { id: 102, dica: "Troque o filtro de ar do motor conforme especificado no manual." }
+    ],
+    carroesportivo: [
+        { id: 201, dica: "Verifique o desgaste dos pneus de alta performance com mais frequência." },
+        { id: 202, dica: "Utilize somente óleo sintético de alta qualidade recomendado pelo fabricante." }
+    ],
+    caminhao: [
+        { id: 301, dica: "Inspecione o sistema de freios a ar diariamente antes de sair." },
+        { id: 302, dica: "Verifique o estado e a lubrificação da quinta roda (se aplicável)." }
+    ],
+    moto: [ // Adicionei um tipo extra para exemplo
+        { id: 401, dica: "Lubrifique e ajuste a tensão da corrente de transmissão regularmente." },
+        { id: 402, dica: "Verifique o funcionamento de todas as luzes, incluindo piscas e luz de freio." }
+    ]
+};
+
+// --- FIM DAS MODIFICAÇÕES ---
+
+
 // --- Middleware ---
-
-// 1. Middleware para CORS (Cross-Origin Resource Sharing)
-// Este middleware DEVE vir ANTES das suas definições de rotas.
 app.use((req, res, next) => {
-    // Permite requisições de qualquer origem.
-    // Para produção, considere restringir a origens específicas:
-    // const allowedOrigins = ['http://meusite.com', 'https://meufrontend.vercel.app'];
-    // const origin = req.headers.origin;
-    // if (allowedOrigins.includes(origin)) {
-    //     res.setHeader('Access-Control-Allow-Origin', origin);
-    // }
     res.header('Access-Control-Allow-Origin', '*');
-
-    // Define quais cabeçalhos HTTP podem ser usados durante a requisição real.
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-
-    // Define quais métodos HTTP são permitidos.
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-
-    // Navegadores enviam uma requisição OPTIONS "preflight" para verificar o CORS
-    // antes de fazer a requisição GET/POST real, especialmente para requisições "não simples".
-    // É importante responder a ela com sucesso (200 ou 204).
     if (req.method === 'OPTIONS') {
-        return res.sendStatus(200); // Ou res.sendStatus(204)
+        return res.sendStatus(200);
     }
-
-    next(); // Passa para o próximo middleware ou manipulador de rota.
+    next();
 });
 
-// 2. Middleware para parsear o corpo de requisições JSON
-// Essencial se você tiver rotas POST ou PUT que enviam dados JSON.
 app.use(express.json());
 
-// --- Rotas ---
 
-// Rota principal para verificar se o servidor está funcionando
+// --- Rotas ---
 app.get('/', (req, res) => {
     res.send('Servidor Backend da Garagem Conectada está funcionando!');
 });
 
-// Rota para obter previsão do tempo
+// Rota de previsão do tempo (EXISTENTE)
 app.get('/api/previsao/:cidade', async (req, res) => {
-    const { cidade } = req.params; // Pega o parâmetro :cidade da URL
-
-    // Validação da API Key
-    if (!apiKey || apiKey === "" || apiKey.length < 20) { // Verificação um pouco mais robusta
-        console.error("[Servidor] ERRO: Chave da API OpenWeatherMap não configurada ou inválida no servidor.");
-        return res.status(500).json({ error: 'Erro interno do servidor: Configuração da API de previsão do tempo está incompleta ou inválida.' });
+    const { cidade } = req.params;
+    if (!apiKey || apiKey.length < 20) {
+        console.error("[Servidor] ERRO: Chave da API OpenWeatherMap não configurada.");
+        return res.status(500).json({ error: 'Erro interno do servidor: Configuração da API está incompleta.' });
     }
-
-    // Validação do parâmetro cidade
     if (!cidade) {
         return res.status(400).json({ error: 'Nome da cidade é obrigatório.' });
     }
-
     const weatherAPIUrl = `https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(cidade)}&appid=${apiKey}&units=metric&lang=pt_br`;
-
     try {
-        console.log(`[Servidor] Buscando previsão para: ${cidade}. URL: ${weatherAPIUrl.replace(apiKey, "CHAVE_OCULTA")}`);
         const apiResponse = await axios.get(weatherAPIUrl);
-
-        console.log('[Servidor] Sucesso: Dados recebidos da OpenWeatherMap para', cidade);
-        // Envia a resposta da API OpenWeatherMap diretamente para o nosso frontend
-        // Os cabeçalhos CORS já foram adicionados pelo middleware app.use() no topo.
         res.json(apiResponse.data);
-
     } catch (error) {
         console.error(`[Servidor] ERRO ao buscar previsão para ${cidade}:`, error.message);
-
-        // Tratamento de erros da chamada Axios para OpenWeatherMap
         if (error.response) {
-            // A requisição foi feita e o servidor da OpenWeatherMap respondeu com um status code fora do range 2xx
-            console.error("[Servidor] Detalhes do erro da API OpenWeatherMap:", error.response.status, error.response.data);
             const statusCode = error.response.status;
-            const errorMessage = error.response.data?.message || 'Erro ao buscar dados na API de previsão externa.';
-            
-            if (statusCode === 401) {
-                 return res.status(401).json({ error: 'Chave da API de previsão inválida ou não autorizada.' });
-            } else if (statusCode === 404) {
-                 return res.status(404).json({ error: `Cidade '${cidade}' não encontrada na API de previsão.` });
+            const errorMessage = error.response.data?.message || 'Erro na API externa.';
+            if (statusCode === 404) {
+                 return res.status(404).json({ error: `Cidade '${cidade}' não encontrada.` });
             }
             return res.status(statusCode).json({ error: errorMessage });
-
-        } else if (error.request) {
-            // A requisição foi feita mas nenhuma resposta foi recebida (ex: problema de rede, API offline)
-            console.error("[Servidor] Nenhuma resposta recebida da API OpenWeatherMap.");
-            return res.status(503).json({ error: 'Serviço da API de previsão indisponível no momento (sem resposta).' });
-        } else {
-            // Algo aconteceu ao configurar a requisição que acionou um erro
-            console.error("[Servidor] Erro ao configurar a requisição para OpenWeatherMap:", error.message);
-            return res.status(500).json({ error: 'Erro interno no servidor ao tentar buscar previsão.' });
         }
+        return res.status(500).json({ error: 'Erro interno no servidor ao tentar buscar previsão.' });
     }
 });
+
+
+// --- INÍCIO DAS NOVAS ROTAS (ATIVIDADE B2.P1.A8) ---
+
+// 2. Nova Rota: GET /api/dicas-manutencao
+// Retorna a lista completa de dicas gerais.
+app.get('/api/dicas-manutencao', (req, res) => {
+    console.log("[Servidor] Requisição recebida para /api/dicas-manutencao");
+    res.json(dicasManutencaoGerais);
+});
+
+// 3. Nova Rota Dinâmica: GET /api/dicas-manutencao/:tipoVeiculo
+// Retorna dicas específicas para um tipo de veículo passado na URL.
+app.get('/api/dicas-manutencao/:tipoVeiculo', (req, res) => {
+    // Pega o parâmetro da URL e converte para minúsculas para garantir a busca
+    const { tipoVeiculo } = req.params;
+    const tipoNormalizado = tipoVeiculo.toLowerCase();
+    
+    console.log(`[Servidor] Requisição para dicas do tipo: ${tipoNormalizado}`);
+    
+    // Procura no nosso "banco de dados" de dicas por tipo
+    const dicas = dicasPorTipo[tipoNormalizado];
+
+    if (dicas) {
+        // Se encontrou, retorna as dicas como JSON
+        res.json(dicas);
+    } else {
+        // Se não encontrou, retorna um erro 404 (Not Found) com uma mensagem clara
+        res.status(404).json({ error: `Nenhuma dica específica encontrada para o tipo: ${tipoVeiculo}` });
+    }
+});
+
+// --- FIM DAS NOVAS ROTAS ---
+
 
 // --- Inicialização do Servidor ---
 app.listen(port, () => {
     console.log(`Servidor backend rodando em http://localhost:${port}`);
-    if (!apiKey || apiKey === "" || apiKey === "SUA_CHAVE_OPENWEATHERMAP_AQUI" || apiKey.length < 20) {
+    if (!apiKey || apiKey === "" || apiKey === "" || apiKey.length < 20) {
         console.warn("***********************************************************************************");
-        console.warn("ATENÇÃO: A chave da API OpenWeatherMap (OPENWEATHER_API_KEY) não parece estar");
-        console.warn("configurada corretamente no seu arquivo .env ou é inválida.");
-        console.warn("A funcionalidade de previsão do tempo pode não funcionar como esperado.");
-        console.warn("Verifique seu arquivo .env e a validade da sua chave.");
+        console.warn("ATENÇÃO: A chave da API OpenWeatherMap não está configurada corretamente.");
         console.warn("***********************************************************************************");
     } else {
         console.log("[Servidor] Chave da API OpenWeatherMap carregada.");
