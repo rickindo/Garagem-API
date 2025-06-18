@@ -8,8 +8,8 @@ const detalhesTituloElement = document.getElementById('detalhes-veiculo-titulo')
 const agendamentoPlacaInput = document.getElementById('agendamento-veiculo-placa');
 const listaHistoricoElement = document.getElementById('lista-historico');
 const listaAgendamentosElement = document.getElementById('lista-agendamentos');
-const listaGaragemElement1 = document.getElementById('lista-garagem'); // Renomeado para evitar conflito se existisse outro
-const veiculoTipoSelect1 = document.getElementById('veiculo-tipo'); // Renomeado para evitar conflito
+const listaGaragemElement1 = document.getElementById('lista-garagem');
+const veiculoTipoSelect1 = document.getElementById('veiculo-tipo');
 
 const camposCarro = document.getElementById('campos-carro');
 const camposCarroEsportivo = document.getElementById('campos-carroesportivo');
@@ -18,10 +18,56 @@ const camposCaminhao = document.getElementById('campos-caminhao');
 const detalhesExtrasApiElement = document.getElementById('detalhes-extras-api');
 const btnVerDetalhesExtras = document.getElementById('btn-ver-detalhes-extras');
 const previsaoTempoResultadoElement = document.getElementById('previsao-tempo-resultado');
-// apiKeyWarningElement não é mais gerenciado dinamicamente por JS, será estático no HTML
 const notificacoesContainer = document.getElementById('notificacoes-container');
-const previsaoFiltrosContainer1 = document.getElementById('previsao-filtros'); // Renomeado
+const previsaoFiltrosContainer1 = document.getElementById('previsao-filtros');
 
+
+// === INÍCIO ATIVIDADE B2.P1.A9: Novas funções de UI ===
+function exibirVeiculosDestaque(veiculos) {
+    const container = document.getElementById('cards-veiculos-destaque');
+    if (!container) return;
+
+    container.innerHTML = ''; // Limpa a mensagem "Carregando..."
+    if (!veiculos || veiculos.length === 0) {
+        container.innerHTML = '<p>Nenhum veículo em destaque no momento.</p>';
+        return;
+    }
+    
+    veiculos.forEach(veiculo => {
+        const card = document.createElement('div');
+        card.className = 'veiculo-card-destaque'; // Classe para estilização
+        card.innerHTML = `
+            <img src="${veiculo.imagemUrl}" alt="Foto do ${veiculo.modelo}">
+            <div class="card-content">
+                <h3>${veiculo.modelo} (${veiculo.ano})</h3>
+                <p>${veiculo.destaque}</p>
+            </div>
+        `;
+        container.appendChild(card);
+    });
+}
+
+function exibirServicosGaragem(servicos) {
+    const lista = document.getElementById('lista-servicos-oferecidos');
+    if (!lista) return;
+
+    lista.innerHTML = ''; // Limpa a mensagem "Carregando..."
+    if (!servicos || servicos.length === 0) {
+        lista.innerHTML = '<li>Nenhum serviço disponível no momento.</li>';
+        return;
+    }
+
+    servicos.forEach(servico => {
+        const item = document.createElement('li');
+        item.innerHTML = `
+            <strong>${servico.nome}</strong>
+            <p>${servico.descricao}</p>
+            <em>Preço Estimado: ${servico.precoEstimado}</em>
+        `;
+        lista.appendChild(item);
+    });
+}
+// === FIM ATIVIDADE B2.P1.A9 ===
 
 // --- Funções de UI para Veículos e Detalhes ---
 function exibirVeiculos(veiculos) {
@@ -195,9 +241,6 @@ function exibirLoading(element, message = "Carregando...") {
     }
 }
 
-// A função atualizarAvisoApiKey foi removida. O aviso no HTML será estático.
-
-// --- Funções de UI para Previsão do Tempo Filtrada ---
 function exibirPrevisaoFiltrada(dadosFiltrados, periodo, nomeCidade) {
     if (!previsaoTempoResultadoElement) return;
     previsaoTempoResultadoElement.innerHTML = '';

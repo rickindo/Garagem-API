@@ -17,7 +17,6 @@ const verificarClimaBtn = document.getElementById('verificar-clima-btn');
 const previsaoFiltrosContainer = document.getElementById('previsao-filtros');
 const btnVerDetalhesExtrasAPI = document.getElementById('btn-ver-detalhes-extras');
 
-
 // --- Objetos de Áudio ---
 const somLigar = new Audio("./audio/som_ligar.mp3");
 const somDesligar = new Audio("./audio/som_desligar.mp3");
@@ -30,7 +29,6 @@ const somCarga = new Audio("./audio/som_carga.mp3");
 const DADOS_VEICULOS_API_URL = './dados_veiculos_api.json';
 // URL do seu servidor backend. Para produção, troque 'http://localhost:3000' pela URL do seu Render.
 const BACKEND_API_URL = 'http://localhost:3000'; 
-
 
 // --- Funções de Lógica de Veículos e Manutenção ---
 function encontrarVeiculo(placa) {
@@ -267,8 +265,6 @@ function handleInteracao(acao) {
     }
 }
 
-
-// --- Funções de API de Previsão do Tempo ---
 async function buscarPrevisaoTempoDetalhada1(nomeCidade) {
     if (!nomeCidade) {
         throw new Error("Nome da cidade não pode ser vazio.");
@@ -352,18 +348,24 @@ function filtrarEExibirPrevisao(periodo) {
         });
         dadosFiltrados = Object.values(diasUnicos).slice(0, 3).flat();
     }
+    
+    // Na atividade, a função que exibe foi movida para o ui.js, então vamos garantir que este trecho não cause erros
+    // A função original foi ajustada para agrupar os dados por dia para o cenário de '3dias'
+    let dadosAgrupadosParaExibicao = dadosFiltrados;
+    if (periodo === '3dias') {
+        const diasUnicos = {};
+        dadosFiltrados.forEach(item => {
+            const diaStr = new Date(item.dt * 1000).toISOString().slice(0, 10);
+            if (!diasUnicos[diaStr]) diasUnicos[diaStr] = [];
+            diasUnicos[diaStr].push(item);
+        });
+        dadosAgrupadosParaExibicao = Object.values(diasUnicos);
+    }
 
-    exibirPrevisaoFiltrada(dadosFiltrados, periodo, city.name); 
+    exibirPrevisaoFiltrada(dadosAgrupadosParaExibicao, periodo, city.name); 
     atualizarBotaoFiltroAtivo(periodo); 
 }
 
-// --- INÍCIO DAS NOVAS FUNÇÕES (ATIVIDADE B2.P1.A8) ---
-
-/**
- * Exibe as dicas de manutenção na tela.
- * @param {Array<Object>} dicas - Um array de objetos, onde cada objeto tem uma propriedade 'dica'.
- * @param {string} titulo - O título a ser exibido acima da lista de dicas.
- */
 function exibirDicasNaTela(dicas, titulo) {
     const resultadoDiv = document.getElementById('resultado-dicas');
     if (!resultadoDiv) {
@@ -376,7 +378,6 @@ function exibirDicasNaTela(dicas, titulo) {
         return;
     }
 
-    // Cria a lista de dicas em HTML
     let html = `<h3>${titulo}</h3><ul>`;
     dicas.forEach(item => {
         html += `<li>${item.dica}</li>`;
@@ -386,9 +387,6 @@ function exibirDicasNaTela(dicas, titulo) {
     resultadoDiv.innerHTML = html;
 }
 
-/**
- * Busca as dicas de manutenção gerais do backend e as exibe.
- */
 async function handleBuscarDicasGerais() {
     const resultadoDiv = document.getElementById('resultado-dicas');
     exibirLoading(resultadoDiv, "Buscando dicas gerais...");
@@ -407,9 +405,6 @@ async function handleBuscarDicasGerais() {
     }
 }
 
-/**
- * Busca dicas de manutenção específicas para um tipo de veículo.
- */
 async function handleBuscarDicasEspecificas() {
     const inputTipo = document.getElementById('input-tipo-veiculo-dica');
     const resultadoDiv = document.getElementById('resultado-dicas');
@@ -424,10 +419,9 @@ async function handleBuscarDicasEspecificas() {
 
     try {
         const response = await fetch(`${BACKEND_API_URL}/api/dicas-manutencao/${encodeURIComponent(tipoVeiculo)}`);
-        const data = await response.json(); // Pega o JSON mesmo se for erro (para ler a msg)
+        const data = await response.json(); 
 
         if (!response.ok) {
-            // Usa a mensagem de erro vinda do backend, ou uma padrão.
             throw new Error(data.error || `Erro ${response.status}`);
         }
         
@@ -440,20 +434,52 @@ async function handleBuscarDicasEspecificas() {
     }
 }
 
+// === INÍCIO ATIVIDADE B2.P1.A9: Funções para carregar dados do arsenal ===
+async function carregarVeiculosDestaque() {
+    const container = document.getElementById('cards-veiculos-destaque');
+    exibirLoading(container, 'Carregando destaques...');
+    
+    try {
+        const response = await fetch(`${BACKEND_API_URL}/api/garagem/veiculos-destaque`);
+        if (!response.ok) {
+            throw new Error('Falha ao buscar veículos destaque do servidor.');
+        }
+        const veiculos = await response.json();
+        exibirVeiculosDestaque(veiculos);
+    } catch (error) {
+        console.error("Erro ao carregar veículos destaque:", error);
+        if (container) container.innerHTML = `<p class="erro">${error.message}</p>`;
+        exibirNotificacao(error.message, 'error');
+    }
+}
 
-// --- FIM DAS NOVAS FUNÇÕES ---
+async function carregarServicosGaragem() {
+    const lista = document.getElementById('lista-servicos-oferecidos');
+    exibirLoading(lista, '<li>Carregando serviços...</li>');
 
+    try {
+        const response = await fetch(`${BACKEND_API_URL}/api/garagem/servicos-oferecidos`);
+        if (!response.ok) {
+            throw new Error('Falha ao buscar serviços da garagem.');
+        }
+        const servicos = await response.json();
+        exibirServicosGaragem(servicos);
+    } catch (error) {
+        console.error("Erro ao carregar serviços:", error);
+        if (lista) lista.innerHTML = `<li class="erro">${error.message}</li>`;
+        exibirNotificacao(error.message, 'error');
+    }
+}
+// === FIM ATIVIDADE B2.P1.A9 ===
 
 // --- Inicialização e Event Listeners ---
 document.addEventListener('DOMContentLoaded', () => {
-    // Habilita os campos de clima por padrão
     if (verificarClimaBtn) verificarClimaBtn.disabled = false;
     if (destinoViagemInput) {
         destinoViagemInput.disabled = false;
         destinoViagemInput.placeholder = "Ex: Rio de Janeiro";
     }
     if (previsaoFiltrosContainer) previsaoFiltrosContainer.style.display = 'none';
-
 
     garagem = carregarGaragem(); 
     exibirVeiculos(garagem); 
@@ -483,7 +509,6 @@ document.addEventListener('DOMContentLoaded', () => {
         btnVerDetalhesExtrasAPI.addEventListener('click', handleVerDetalhesExtras);
     }
 
-
     if (verificarClimaBtn) verificarClimaBtn.addEventListener('click', handleVerificarClima1);
     if (destinoViagemInput) {
         destinoViagemInput.addEventListener('keypress', (event) => {
@@ -508,7 +533,6 @@ document.addEventListener('DOMContentLoaded', () => {
         veiculoTipoSelect.addEventListener('change', atualizarCamposEspecificos); 
     }
 
-    // --- INÍCIO DOS NOVOS EVENT LISTENERS (ATIVIDADE B2.P1.A8) ---
     const btnBuscarDicasGerais = document.getElementById('btn-buscar-dicas-gerais');
     const btnBuscarDicasEspecificas = document.getElementById('btn-buscar-dicas-especificas');
 
@@ -518,8 +542,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnBuscarDicasEspecificas) {
         btnBuscarDicasEspecificas.addEventListener('click', handleBuscarDicasEspecificas);
     }
-    // --- FIM DOS NOVOS EVENT LISTENERS ---
+
+    // === INÍCIO ATIVIDADE B2.P1.A9: Chamar as novas funções no carregamento da página ===
+    carregarVeiculosDestaque();
+    carregarServicosGaragem();
+    // === FIM ATIVIDADE B2.P1.A9 ===
 
     verificarAgendamentos();
-    console.log("Garagem Conectada (com backend turbinado) inicializada.");
+    console.log("Garagem Conectada (com Arsenal de Dados) inicializada.");
 });

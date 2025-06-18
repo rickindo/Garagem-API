@@ -5,15 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Garagem Conectada - APIs e Viagens</title>
     <link rel="stylesheet" href="css/style.css">
-
 </head>
 <body>
-
     <div class="container">
         <h1>Garagem Conectada: APIs e Viagens</h1>
 
         <div id="notificacoes-container"></div>
-
 
         <div class="section" id="add-vehicle-section">
             <h2>Adicionar Veículo</h2>
@@ -34,7 +31,6 @@
                 <label for="veiculo-cor">Cor:</label>
                 <input type="text" id="veiculo-cor" required>
 
-
                 <div id="campos-carro" class="campos-especificos">
                     <label for="carro-portas">Número de Portas:</label>
                     <input type="number" id="carro-portas" value="4" min="2">
@@ -54,15 +50,12 @@
             </form>
         </div>
 
-
-
         <div class="section" id="garage-section">
             <h2>Minha Garagem</h2>
             <ul id="lista-garagem">
                  <p>Nenhum veículo na garagem.</p>
             </ul>
         </div>
-
 
         <div class="section" id="detalhes-veiculo-section" style="display: none;">
             <h2 id="detalhes-veiculo-titulo">Detalhes, Manutenção e Interação</h2>
@@ -82,9 +75,7 @@
                     <button id="btn-detail-carregar" class="btn-especifico" style="display:none;">Carregar (1000kg)</button>
                     <button id="btn-detail-descarregar" class="btn-especifico" style="display:none;">Descarregar (500kg)</button>
                 </div>
-                 <!-- A imagem do veículo (que seria adicionada na outra funcionalidade) não está aqui neste HTML base -->
             </div>
-
 
             <div class="api-details-section">
                 <h3>Detalhes Extras (API Simulada)</h3>
@@ -93,8 +84,6 @@
                     <p>Clique no botão acima para carregar detalhes.</p>
                 </div>
             </div>
-
-
 
             <div class="maintenance-details">
                 <h3>Histórico de Manutenção</h3>
@@ -123,7 +112,6 @@
             </div>
         </div>
 
-
         <div class="section" id="travel-planner-section">
             <h2>Planejar Viagem (Previsão do Tempo)</h2>
             <div class="travel-form">
@@ -131,44 +119,54 @@
                 <input type="text" id="destino-viagem" placeholder="Ex: Rio de Janeiro">
                 <button id="verificar-clima-btn">Verificar Clima</button>
             </div>
-
-            <!-- INÍCIO: Botões de Filtro de Previsão -->
             <div id="previsao-filtros" style="margin-top: 15px; margin-bottom: 10px; display: none;">
                 <button class="btn-filtro-clima" data-periodo="hoje">Hoje</button>
                 <button class="btn-filtro-clima" data-periodo="amanha">Amanhã</button>
                 <button class="btn-filtro-clima" data-periodo="3dias">Próximos 3 dias</button>
             </div>
-    
-
             <div id="previsao-tempo-resultado" class="api-result">
                 <p>Digite uma cidade e clique em verificar.</p>
             </div>
-             <p class="api-key-warning">
+             <p class="api-key-warning"></p>
+        </div>
         
-            </p>
-        </div>
+        <section class="section secao-dicas" id="secao-dicas-manutencao">
+            <h2>Dicas de Manutenção do Backend</h2>
+            <div class="dicas-controles">
+                <button id="btn-buscar-dicas-gerais" class="btn-acao">Buscar Dicas Gerais</button>
+                <div class="form-grupo-dicas">
+                    <input type="text" id="input-tipo-veiculo-dica" placeholder="Digite tipo (ex: carro, caminhao)">
+                    <button id="btn-buscar-dicas-especificas" class="btn-acao">Buscar Dica Específica</button>
+                </div>
+            </div>
+            <div id="resultado-dicas" class="resultado-api">
+            </div>
+        </section>
+
+        <!-- === INÍCIO ATIVIDADE B2.P1.A9: NOVAS SEÇÕES NO HTML === -->
+        
+        <section class="section" id="secao-veiculos-destaque">
+            <h2>Nossos Veículos em Destaque</h2>
+            <div id="cards-veiculos-destaque" class="cards-container">
+                <!-- Os cards dos veículos serão inseridos aqui pelo JavaScript -->
+            </div>
+        </section>
+
+        <section class="section" id="secao-servicos">
+            <h2>Serviços que Oferecemos</h2>
+            <ul id="lista-servicos-oferecidos">
+                <!-- A lista de serviços será inserida aqui pelo JavaScript -->
+            </ul>
+        </section>
+
+        <!-- === FIM ATIVIDADE B2.P1.A9 === -->
 
     </div>
-
-    <section class="secao-dicas" id="secao-dicas-manutencao">
-    <h2>Dicas de Manutenção do Backend</h2>
-    <div class="dicas-controles">
-        <button id="btn-buscar-dicas-gerais" class="btn-acao">Buscar Dicas Gerais</button>
-        <div class="form-grupo-dicas">
-            <input type="text" id="input-tipo-veiculo-dica" placeholder="Digite tipo (ex: carro, caminhao)">
-            <button id="btn-buscar-dicas-especificas" class="btn-acao">Buscar Dica Específica</button>
-        </div>
-    </div>
-    <div id="resultado-dicas" class="resultado-api">
-        <!-- As dicas carregadas do backend aparecerão aqui -->
-    </div>
-</section>
 
     <script src="js/manuntencao.js"></script>
     <script src="js/veiculo.js"></script>
     <script src="js/storage.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/main.js"></script>
-
 </body>
 </html>
