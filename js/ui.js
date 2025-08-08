@@ -4,6 +4,8 @@
 const garagemSection = document.getElementById('garage-section');
 const addVehicleSection = document.getElementById('add-vehicle-section');
 const detalhesSection = document.getElementById('detalhes-veiculo-section');
+// Garante que a lista global de veículos existe
+window.veiculos = window.veiculos || [];
 const detalhesTituloElement = document.getElementById('detalhes-veiculo-titulo');
 const agendamentoPlacaInput = document.getElementById('agendamento-veiculo-placa');
 const listaHistoricoElement = document.getElementById('lista-historico');
@@ -141,6 +143,8 @@ function atualizarDetalhesInteracao(veiculo) {
 }
 
 function exibirDetalhesCompletos(veiculo) {
+    window.veiculoSelecionado = veiculo; // <-- Adicione esta linha
+
     if (!veiculo) return;
     if (detalhesTituloElement) detalhesTituloElement.textContent = `Detalhes - ${veiculo.placa} (${veiculo.modelo})`;
     if (agendamentoPlacaInput) agendamentoPlacaInput.value = veiculo.placa;
@@ -326,3 +330,133 @@ function atualizarBotaoFiltroAtivo(periodoAtivo) {
         }
     });
 }
+
+document.getElementById('btn-detail-editar').addEventListener('click', function() {
+    window.editandoVeiculo = true;
+// Intercepta o submit do formulário de veículo para editar ou criar
+const formAddVeiculo = document.getElementById('form-add-veiculo');
+if (formAddVeiculo) {
+    formAddVeiculo.addEventListener('submit', function(event) {
+        event.preventDefault();
+        const tipo = document.getElementById('veiculo-tipo').value;
+        const placa = document.getElementById('veiculo-placa').value.trim().toUpperCase();
+        const modelo = document.getElementById('veiculo-modelo').value.trim();
+        const cor = document.getElementById('veiculo-cor').value.trim();
+        let portas = null, eixos = null, capacidade = null;
+        if (tipo === 'Carro') portas = document.getElementById('carro-portas').value;
+        if (tipo === 'CarroEsportivo') portas = document.getElementById('carroesportivo-portas').value;
+        if (tipo === 'Caminhao') {
+            eixos = document.getElementById('caminhao-eixos').value;
+            capacidade = document.getElementById('caminhao-capacidade').value;
+        }
+        if (!placa || !modelo || !cor) {
+            exibirNotificacao("Placa, modelo e cor são obrigatórios.", "error"); return;
+        }
+        if (window.editandoVeiculo && window.veiculoSelecionado) {
+            // Atualiza o veículo existente
+            let veiculo = window.veiculos.find(v => v.placa === window.veiculoSelecionado.placa);
+            if (veiculo) {
+                veiculo.modelo = modelo;
+                veiculo.cor = cor;
+                veiculo._tipoVeiculo = tipo;
+                veiculo.placa = placa;
+                if (tipo === 'Carro' || tipo === 'CarroEsportivo') veiculo.portas = portas;
+                if (tipo === 'Caminhao') {
+                    veiculo.eixos = eixos;
+                    veiculo.capacidade = capacidade;
+                }
+                exibirNotificacao('Veículo atualizado com sucesso!', 'sucesso');
+                exibirVeiculos(window.veiculos);
+                mostrarGaragemView();
+                limparFormulario('form-add-veiculo');
+                window.editandoVeiculo = false;
+                window.veiculoSelecionado = null;
+                return;
+            }
+        }
+        // Se não estiver editando, cria novo (fluxo padrão)
+        if (window.veiculos.find(v => v.placa === placa)) {
+            exibirNotificacao(`Placa ${placa} já existe.`, "error"); return;
+        }
+        let novoVeiculo = null;
+        try {
+            switch (tipo) {
+                case 'Carro':
+                    novoVeiculo = new Carro(placa, modelo, cor, portas);
+                    break;
+                case 'CarroEsportivo':
+                    novoVeiculo = new CarroEsportivo(placa, modelo, cor, portas);
+                    break;
+                case 'Caminhao':
+                    novoVeiculo = new Caminhao(placa, modelo, cor, eixos, capacidade);
+                    break;
+                default:
+                    exibirNotificacao("Tipo de veículo inválido.", "error"); return;
+            }
+            window.veiculos.push(novoVeiculo);
+            exibirNotificacao(`${tipo} ${placa} adicionado com sucesso!`, "success");
+            exibirVeiculos(window.veiculos);
+            mostrarGaragemView();
+            limparFormulario('form-add-veiculo');
+        } catch (error) {
+            console.error("Erro ao criar veículo:", error);
+            exibirNotificacao(`Erro ao adicionar: ${error.message}`, "error");
+        }
+    });
+}
+    // Abre o formulário de edição preenchido com os dados do veículo selecionado
+    if (!window.veiculoSelecionado) {
+        exibirNotificacao('Nenhum veículo selecionado para edição.', 'erro');
+        return;
+    }
+    // Mostra a aba de adicionar/editar veículo
+    if (typeof addVehicleSection !== 'undefined' && addVehicleSection) {
+        addVehicleSection.style.display = 'block';
+    }
+    if (typeof detalhesSection !== 'undefined' && detalhesSection) {
+        detalhesSection.style.display = 'none';
+    }
+    if (typeof garagemSection !== 'undefined' && garagemSection) {
+        garagemSection.style.display = 'none';
+    }
+    // Preenche o formulário com os dados do veículo
+    document.getElementById('veiculo-tipo').value = window.veiculoSelecionado._tipoVeiculo || '';
+    document.getElementById('veiculo-placa').value = window.veiculoSelecionado.placa || '';
+    document.getElementById('veiculo-modelo').value = window.veiculoSelecionado.modelo || '';
+    document.getElementById('veiculo-cor').value = window.veiculoSelecionado.cor || '';
+    // Campos específicos
+    if (window.veiculoSelecionado._tipoVeiculo === 'Carro' && document.getElementById('carro-portas')) {
+        document.getElementById('carro-portas').value = window.veiculoSelecionado.portas || '';
+    }
+    if (window.veiculoSelecionado._tipoVeiculo === 'CarroEsportivo' && document.getElementById('carroesportivo-portas')) {
+        document.getElementById('carroesportivo-portas').value = window.veiculoSelecionado.portas || '';
+    }
+    if (window.veiculoSelecionado._tipoVeiculo === 'Caminhao') {
+        if (document.getElementById('caminhao-eixos')) document.getElementById('caminhao-eixos').value = window.veiculoSelecionado.eixos || '';
+        if (document.getElementById('caminhao-capacidade')) document.getElementById('caminhao-capacidade').value = window.veiculoSelecionado.capacidade || '';
+    }
+    atualizarCamposEspecificos();
+    exibirNotificacao('Edite os dados e salve para atualizar o veículo.', 'info');
+});
+
+document.getElementById('btn-detail-excluir').addEventListener('click', function() {
+    if (confirm('Tem certeza que deseja excluir este veículo?')) {
+        // Debug: mostra o estado das variáveis
+        console.log('Veiculos:', window.veiculos);
+        console.log('Selecionado:', window.veiculoSelecionado);
+        if (window.veiculos && window.veiculoSelecionado) {
+            window.veiculos = window.veiculos.filter(v => v.placa !== window.veiculoSelecionado.placa);
+            if (typeof mostrarGaragemView === 'function') {
+                mostrarGaragemView();
+            }
+            // Atualiza a lista na tela
+            if (typeof exibirVeiculos === 'function') {
+                exibirVeiculos(window.veiculos);
+            }
+            document.getElementById('detalhes-veiculo-section').style.display = 'none';
+            exibirNotificacao('Veículo excluído com sucesso!', 'sucesso');
+        } else {
+            exibirNotificacao('Erro ao excluir: veículo não encontrado.', 'erro');
+        }
+    }
+});

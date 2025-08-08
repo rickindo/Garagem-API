@@ -12,7 +12,7 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 3000;
 const apiKey = process.env.OPENWEATHER_API_KEY;
-const mongoURI = process.env.MONGO_URI;
+const mongoURI = process.env.MONGODB_URI;
 
 // --- Middlewares ---
 app.use(cors());
@@ -53,6 +53,18 @@ const ServicoGaragemSchema = new mongoose.Schema({
     precoEstimado: { type: String, required: true }
 });
 const ServicoGaragem = mongoose.model('ServicoGaragem', ServicoGaragemSchema);
+
+// === SCHEMA DO VEÍCULO (exemplo, ajuste conforme seu projeto) ===
+const VeiculoSchema = new mongoose.Schema({
+    tipo: String,
+    placa: String,
+    modelo: String,
+    cor: String,
+    portas: Number,
+    eixos: Number,
+    capacidade: Number
+});
+const Veiculo = mongoose.model('Veiculo', VeiculoSchema);
 
 
 // =========================================================================
@@ -147,6 +159,37 @@ app.get('/api/garagem/servicos-oferecidos', async (req, res) => {
     }
 });
 
+// === ENDPOINTS CRUD VEÍCULO ===
+
+// Atualizar veículo (PUT)
+app.put('/api/veiculos/:id', async (req, res) => {
+    try {
+        const veiculoAtualizado = await Veiculo.findByIdAndUpdate(
+            req.params.id,
+            req.body,
+            { new: true, runValidators: true }
+        );
+        if (!veiculoAtualizado) {
+            return res.status(404).json({ error: 'Veículo não encontrado' });
+        }
+        res.json(veiculoAtualizado);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+// Deletar veículo (DELETE)
+app.delete('/api/veiculos/:id', async (req, res) => {
+    try {
+        const veiculoRemovido = await Veiculo.findByIdAndDelete(req.params.id);
+        if (!veiculoRemovido) {
+            return res.status(404).json({ error: 'Veículo não encontrado' });
+        }
+        res.json({ message: 'Veículo removido com sucesso' });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
 
 // =========================================================================
 // === 2. FUNÇÃO PARA POPULAR O BANCO DE DADOS (SE ESTIVER VAZIO) ========

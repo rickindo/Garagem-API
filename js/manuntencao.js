@@ -72,3 +72,40 @@ class Manutencao {
         return isDataValida && isTipoValido && isCustoValido;
     }
 }
+
+/**
+ * Exibe a lista de veículos na interface.
+ * @param {Array} veiculos - A lista de veículos a serem exibidos.
+ */
+function exibirVeiculos(veiculos) {
+    const lista = document.getElementById('lista-veiculos');
+    lista.innerHTML = '';
+    veiculos.forEach(veiculo => {
+        const item = document.createElement('div');
+        item.className = 'veiculo-item';
+        item.innerHTML = `
+            <strong>${veiculo.modelo}</strong> (${veiculo.placa}) - ${veiculo.cor}
+            <button class="btn-editar" data-id="${veiculo._id}">Editar</button>
+            <button class="btn-excluir" data-id="${veiculo._id}">Excluir</button>
+        `;
+        lista.appendChild(item);
+    });
+
+    // Eventos dos botões
+    document.querySelectorAll('.btn-excluir').forEach(btn => {
+        btn.onclick = async function() {
+            const id = this.getAttribute('data-id');
+            if (confirm('Tem certeza que deseja excluir este veículo?')) {
+                await fetch(`/api/veiculos/${id}`, { method: 'DELETE' });
+                carregarVeiculos(); // Atualiza a lista
+            }
+        };
+    });
+
+    document.querySelectorAll('.btn-editar').forEach(btn => {
+        btn.onclick = function() {
+            const id = this.getAttribute('data-id');
+            abrirFormularioEdicao(id);
+        };
+    });
+}

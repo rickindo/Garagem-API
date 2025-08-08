@@ -1,7 +1,8 @@
 // js/main.js
 
 // --- Estado da Aplicação ---
-let garagem = [];
+window.veiculos = window.veiculos || [];
+let garagem = window.veiculos;
 let veiculoAtualPlaca = null;
 let ultimaPrevisaoCompleta = null;
 let ultimaCidadePesquisada = "";
@@ -32,7 +33,7 @@ const BACKEND_API_URL = 'http://localhost:3000';
 
 // --- Funções de Lógica de Veículos e Manutenção ---
 function encontrarVeiculo(placa) {
-    return garagem.find(v => v.placa === placa);
+    return window.veiculos.find(v => v.placa === placa);
 }
 
 function handleAddVeiculo(event) {
@@ -69,9 +70,9 @@ function handleAddVeiculo(event) {
                 exibirNotificacao("Tipo de veículo inválido.", "error"); return;
         }
 
-        garagem.push(novoVeiculo);
-        salvarGaragem(garagem);
-        exibirVeiculos(garagem);
+        window.veiculos.push(novoVeiculo);
+        salvarGaragem(window.veiculos);
+        exibirVeiculos(window.veiculos);
         exibirNotificacao(`${tipo} ${placa} adicionado com sucesso!`, "success");
         limparFormulario('form-add-veiculo');
 
@@ -107,7 +108,7 @@ function handleAgendarManutencao(event) {
             exibirNotificacao("Dados da manutenção inválidos (verifique data, tipo e custo).", "warning"); return;
         }
         if (veiculo.adicionarManutencao(novaManutencao)) {
-            salvarGaragem(garagem);
+            salvarGaragem(window.veiculos);
             exibirDetalhesCompletos(veiculo);
             exibirNotificacao(`Manutenção para ${placa} agendada!`, "success");
             limparFormulario('form-agendamento');
@@ -127,7 +128,7 @@ function verificarAgendamentos() {
     hoje.setHours(0, 0, 0, 0);
     amanha.setHours(0, 0, 0, 0);
 
-    garagem.forEach(veiculo => {
+    window.veiculos.forEach(veiculo => {
         if (veiculo.historicoManutencao && Array.isArray(veiculo.historicoManutencao)) {
             veiculo.historicoManutencao.forEach(manutencao => {
                 if (!(manutencao instanceof Manutencao) || !manutencao.data) return;
@@ -481,8 +482,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (previsaoFiltrosContainer) previsaoFiltrosContainer.style.display = 'none';
 
-    garagem = carregarGaragem(); 
-    exibirVeiculos(garagem); 
+    window.veiculos = carregarGaragem();
+    exibirVeiculos(window.veiculos);
     atualizarCamposEspecificos();
 
     if (formAddVeiculo) formAddVeiculo.addEventListener('submit', handleAddVeiculo);
@@ -550,4 +551,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     verificarAgendamentos();
     console.log("Garagem Conectada (com Arsenal de Dados) inicializada.");
+
+    // Removido: listeners duplicados de excluir/editar. A lógica está no ui.js
 });
