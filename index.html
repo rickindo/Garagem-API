@@ -79,13 +79,13 @@
                 </div>
             </div>
 
-            <div class="api-details-section">
+        <!--    <div class="api-details-section">
                 <h3>Detalhes Extras (API Simulada)</h3>
                 <button id="btn-ver-detalhes-extras" style="margin-bottom: 10px;">Ver Detalhes Extras</button>
                 <div id="detalhes-extras-api">
                     <p>Clique no botão acima para carregar detalhes.</p>
                 </div>
-            </div>
+            </div>-->
 
             <div class="maintenance-details">
                 <h3>Histórico de Manutenção</h3>
@@ -133,12 +133,14 @@
         </div>
         
         <section class="section secao-dicas" id="secao-dicas-manutencao">
-            <h2>Dicas de Manutenção do Backend</h2>
-            <div class="dicas-controles">
+            <h2>Dicas de Manutenção:</h2>
+            
+                    <input type="text" id="input-tipo-veiculo-dica" placeholder="Digite tipo (ex: carro, caminhao)">
+                    <div class="dicas-controles">
                 <button id="btn-buscar-dicas-gerais" class="btn-acao">Buscar Dicas Gerais</button>
                 <div class="form-grupo-dicas">
-                    <input type="text" id="input-tipo-veiculo-dica" placeholder="Digite tipo (ex: carro, caminhao)">
                     <button id="btn-buscar-dicas-especificas" class="btn-acao">Buscar Dica Específica</button>
+                    
                 </div>
             </div>
             <div id="resultado-dicas" class="resultado-api">
