@@ -503,4 +503,102 @@ ul li:last-child {
     color: #007bff;
     font-weight: bold;
 }
-/* === FIM ATIVIDADE B2.P1.A9 === */
+
+.form-manutencao {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.form-manutencao .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.form-manutencao label {
+    font-weight: bold;
+    color: #555;
+}
+
+.form-manutencao input {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.form-manutencao input:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+}
+
+/* Estilos para a lista de manutenções */
+.manutencao-item {
+    background-color: white;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.manutencao-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.manutencao-header h4 {
+    margin: 0;
+    color: #333;
+}
+
+.manutencao-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-small {
+    padding: 4px 8px;
+    font-size: 12px;
+}
+
+.btn-edit {
+    background-color: #ffc107;
+    color: #000;
+}
+
+.btn-delete {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-cancelar {
+    background-color: #6c757d;
+    color: white;
+    margin-left: 10px;
+}
+
+@media (max-width: 768px) {
+    .form-manutencao {
+        padding: 15px;
+    }
+
+    .manutencao-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .manutencao-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+}
+/* === FIM ATIVIDADE B3.P1.A3 === */

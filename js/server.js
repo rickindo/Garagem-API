@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import axios from 'axios';
 import cors from 'cors';
 import mongoose from 'mongoose'; // Mongoose é nosso ORM para o MongoDB
+import Manutencao from './models/Manutencao.js';
 
 // --- Configuração Inicial ---
 dotenv.config();
@@ -188,6 +189,110 @@ app.delete('/api/veiculos/:id', async (req, res) => {
         res.json({ message: 'Veículo removido com sucesso' });
     } catch (error) {
         res.status(400).json({ error: error.message });
+    }
+});
+
+// === ENDPOINTS CRUD MANUTENÇÃO (SUB-RECURSO DE VEÍCULO) ===
+
+// Criar uma nova manutenção para um veículo
+app.post('/api/veiculos/:veiculoId/manutencoes', async (req, res) => {
+    try {
+        const { veiculoId } = req.params;
+        
+        // Verifica se o veículo existe
+        const veiculo = await Veiculo.findById(veiculoId);
+        if (!veiculo) {
+            return res.status(404).json({ error: 'Veículo não encontrado' });
+        }
+
+        // Cria a nova manutenção
+        const manutencao = await Manutencao.create({
+            ...req.body,
+            veiculo: veiculoId
+        });
+
+        res.status(201).json(manutencao);
+    } catch (error) {
+        if (error.name === 'ValidationError') {
+            return res.status(400).json({ error: error.message });
+        }
+        console.error('Erro ao criar manutenção:', error);
+        res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+});
+
+// Listar todas as manutenções de um veículo
+app.get('/api/veiculos/:veiculoId/manutencoes', async (req, res) => {
+    try {
+        const { veiculoId } = req.params;
+
+        // Verifica se o veículo existe
+        const veiculo = await Veiculo.findById(veiculoId);
+        if (!veiculo) {
+            return res.status(404).json({ error: 'Veículo não encontrado' });
+        }
+
+        // Busca todas as manutenções do veículo
+        const manutencoes = await Manutencao.find({ veiculo: veiculoId })
+            .sort({ data: -1 });
+
+        res.json(manutencoes);
+    } catch (error) {
+        console.error('Erro ao listar manutenções:', error);
+        res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+});
+
+// Atualizar uma manutenção específica
+app.put('/api/veiculos/:veiculoId/manutencoes/:manutencaoId', async (req, res) => {
+    try {
+        const { veiculoId, manutencaoId } = req.params;
+
+        // Verifica se o veículo existe
+        const veiculo = await Veiculo.findById(veiculoId);
+        if (!veiculo) {
+            return res.status(404).json({ error: 'Veículo não encontrado' });
+        }
+
+        // Atualiza a manutenção
+        const manutencao = await Manutencao.findOneAndUpdate(
+            { _id: manutencaoId, veiculo: veiculoId },
+            req.body,
+            { new: true, runValidators: true }
+        );
+
+        if (!manutencao) {
+            return res.status(404).json({ error: 'Manutenção não encontrada' });
+        }
+
+        res.json(manutencao);
+    } catch (error) {
+        if (error.name === 'ValidationError') {
+            return res.status(400).json({ error: error.message });
+        }
+        console.error('Erro ao atualizar manutenção:', error);
+        res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+});
+
+// Excluir uma manutenção específica
+app.delete('/api/veiculos/:veiculoId/manutencoes/:manutencaoId', async (req, res) => {
+    try {
+        const { veiculoId, manutencaoId } = req.params;
+
+        const manutencao = await Manutencao.findOneAndDelete({
+            _id: manutencaoId,
+            veiculo: veiculoId
+        });
+
+        if (!manutencao) {
+            return res.status(404).json({ error: 'Manutenção não encontrada' });
+        }
+
+        res.json({ message: 'Manutenção excluída com sucesso' });
+    } catch (error) {
+        console.error('Erro ao excluir manutenção:', error);
+        res.status(500).json({ error: 'Erro interno do servidor' });
     }
 });
 

@@ -143,7 +143,7 @@ function atualizarDetalhesInteracao(veiculo) {
 }
 
 function exibirDetalhesCompletos(veiculo) {
-    window.veiculoSelecionado = veiculo; // <-- Adicione esta linha
+    window.veiculoSelecionado = veiculo;
 
     if (!veiculo) return;
     if (detalhesTituloElement) detalhesTituloElement.textContent = `Detalhes - ${veiculo.placa} (${veiculo.modelo})`;
@@ -152,6 +152,9 @@ function exibirDetalhesCompletos(veiculo) {
     if (btnVerDetalhesExtras) btnVerDetalhesExtras.dataset.placa = veiculo.placa;
 
     atualizarDetalhesInteracao(veiculo);
+    
+    // Exibe o formulário de manutenção
+    exibirFormularioManutencao(veiculo._id);
 
     if (listaHistoricoElement) listaHistoricoElement.innerHTML = '';
     if (listaAgendamentosElement) listaAgendamentosElement.innerHTML = '';
@@ -460,3 +463,256 @@ document.getElementById('btn-detail-excluir').addEventListener('click', function
         }
     }
 });
+
+// --- Funções de Interface para Manutenções ---
+
+// Função para exibir o formulário de manutenção
+function exibirFormularioManutencao(veiculoId) {
+    const container = document.getElementById('detalhes-veiculo');
+    if (!container) return;
+
+    const formHTML = `
+        <div class="card">
+            <h3>Adicionar Nova Manutenção</h3>
+            <form id="form-manutencao" class="form-manutencao">
+                <input type="hidden" id="veiculo-id" value="${veiculoId}">
+                <div class="form-group">
+                    <label for="descricao-servico">Descrição do Serviço:</label>
+                    <input type="text" id="descricao-servico" required>
+                </div>
+                <div class="form-group">
+                    <label for="data-manutencao">Data:</label>
+                    <input type="date" id="data-manutencao" required>
+                </div>
+                <div class="form-group">
+                    <label for="custo-manutencao">Custo:</label>
+                    <input type="number" id="custo-manutencao" min="0" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="quilometragem">Quilometragem:</label>
+                    <input type="number" id="quilometragem" min="0">
+                </div>
+                <button type="submit" class="btn btn-primary">Adicionar Manutenção</button>
+            </form>
+        </div>
+        <div id="lista-manutencoes" class="card">
+            <h3>Histórico de Manutenções</h3>
+            <div id="manutencoes-container"></div>
+        </div>
+    `;
+
+    container.insertAdjacentHTML('beforeend', formHTML);
+    
+    // Adiciona o handler para o formulário
+    const form = document.getElementById('form-manutencao');
+    form.addEventListener('submit', handleSubmitManutencao);
+
+    // Carrega as manutenções existentes
+    carregarManutencoes(veiculoId);
+}
+
+// Função para carregar manutenções do veículo
+async function carregarManutencoes(veiculoId) {
+    try {
+        const response = await fetch(`${BACKEND_API_URL}/api/veiculos/${veiculoId}/manutencoes`);
+        if (!response.ok) {
+            throw new Error('Falha ao carregar manutenções');
+        }
+        const manutencoes = await response.json();
+        exibirManutencoes(manutencoes);
+    } catch (error) {
+        console.error('Erro ao carregar manutenções:', error);
+        exibirNotificacao('Erro ao carregar manutenções', 'error');
+    }
+}
+
+// Função para exibir as manutenções na interface
+function exibirManutencoes(manutencoes) {
+    const container = document.getElementById('manutencoes-container');
+    if (!container) return;
+
+    if (manutencoes.length === 0) {
+        container.innerHTML = '<p>Nenhuma manutenção registrada.</p>';
+        return;
+    }
+
+    const manutencoesSorted = manutencoes.sort((a, b) => new Date(b.data) - new Date(a.data));
+    
+    const html = manutencoesSorted.map(manutencao => `
+        <div class="manutencao-item" data-id="${manutencao._id}">
+            <div class="manutencao-header">
+                <h4>${manutencao.descricaoServico}</h4>
+                <div class="manutencao-actions">
+                    <button onclick="editarManutencao('${manutencao._id}')" class="btn btn-small btn-edit">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button onclick="excluirManutencao('${manutencao._id}')" class="btn btn-small btn-delete">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+            <p>Data: ${new Date(manutencao.data).toLocaleDateString()}</p>
+            <p>Custo: R$ ${manutencao.custo.toFixed(2)}</p>
+            ${manutencao.quilometragem ? `<p>Quilometragem: ${manutencao.quilometragem} km</p>` : ''}
+        </div>
+    `).join('');
+
+    container.innerHTML = html;
+}
+
+// Handler para o submit do formulário de manutenção
+async function handleSubmitManutencao(event) {
+    event.preventDefault();
+    
+    const veiculoId = document.getElementById('veiculo-id').value;
+    const descricaoServico = document.getElementById('descricao-servico').value;
+    const data = document.getElementById('data-manutencao').value;
+    const custo = parseFloat(document.getElementById('custo-manutencao').value);
+    const quilometragem = document.getElementById('quilometragem').value;
+
+    const manutencao = {
+        descricaoServico,
+        data,
+        custo,
+        quilometragem: quilometragem ? parseInt(quilometragem) : undefined
+    };
+
+    try {
+        const response = await fetch(`${BACKEND_API_URL}/api/veiculos/${veiculoId}/manutencoes`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(manutencao)
+        });
+
+        if (!response.ok) {
+            throw new Error('Erro ao adicionar manutenção');
+        }
+
+        exibirNotificacao('Manutenção adicionada com sucesso', 'success');
+        document.getElementById('form-manutencao').reset();
+        await carregarManutencoes(veiculoId);
+    } catch (error) {
+        console.error('Erro ao adicionar manutenção:', error);
+        exibirNotificacao('Erro ao adicionar manutenção', 'error');
+    }
+}
+
+// Função para excluir uma manutenção
+async function excluirManutencao(manutencaoId) {
+    const veiculoId = document.getElementById('veiculo-id').value;
+    if (!confirm('Tem certeza que deseja excluir esta manutenção?')) return;
+
+    try {
+        const response = await fetch(`${BACKEND_API_URL}/api/veiculos/${veiculoId}/manutencoes/${manutencaoId}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            throw new Error('Erro ao excluir manutenção');
+        }
+
+        exibirNotificacao('Manutenção excluída com sucesso', 'success');
+        await carregarManutencoes(veiculoId);
+    } catch (error) {
+        console.error('Erro ao excluir manutenção:', error);
+        exibirNotificacao('Erro ao excluir manutenção', 'error');
+    }
+}
+
+// Função para editar uma manutenção
+async function editarManutencao(manutencaoId) {
+    const veiculoId = document.getElementById('veiculo-id').value;
+    try {
+        // Busca os dados atuais da manutenção
+        const response = await fetch(`${BACKEND_API_URL}/api/veiculos/${veiculoId}/manutencoes/${manutencaoId}`);
+        if (!response.ok) throw new Error('Erro ao buscar dados da manutenção');
+        
+        const manutencao = await response.json();
+        
+        // Preenche o formulário com os dados atuais
+        document.getElementById('descricao-servico').value = manutencao.descricaoServico;
+        document.getElementById('data-manutencao').value = manutencao.data.split('T')[0];
+        document.getElementById('custo-manutencao').value = manutencao.custo;
+        document.getElementById('quilometragem').value = manutencao.quilometragem || '';
+        
+        // Modifica o formulário para modo de edição
+        const form = document.getElementById('form-manutencao');
+        form.dataset.modo = 'edicao';
+        form.dataset.manutencaoId = manutencaoId;
+        
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.textContent = 'Atualizar Manutenção';
+        
+        // Adiciona um botão para cancelar a edição
+        if (!form.querySelector('.btn-cancelar')) {
+            const btnCancelar = document.createElement('button');
+            btnCancelar.type = 'button';
+            btnCancelar.className = 'btn btn-secondary btn-cancelar';
+            btnCancelar.textContent = 'Cancelar';
+            btnCancelar.onclick = cancelarEdicao;
+            submitBtn.parentNode.insertBefore(btnCancelar, submitBtn.nextSibling);
+        }
+        
+        // Atualiza o handler do formulário
+        form.onsubmit = handleEditarManutencao;
+    } catch (error) {
+        console.error('Erro ao preparar edição:', error);
+        exibirNotificacao('Erro ao carregar dados para edição', 'error');
+    }
+}
+
+// Função para cancelar a edição
+function cancelarEdicao() {
+    const form = document.getElementById('form-manutencao');
+    form.reset();
+    form.dataset.modo = 'criacao';
+    delete form.dataset.manutencaoId;
+    
+    const submitBtn = form.querySelector('button[type="submit"]');
+    submitBtn.textContent = 'Adicionar Manutenção';
+    
+    const btnCancelar = form.querySelector('.btn-cancelar');
+    if (btnCancelar) btnCancelar.remove();
+    
+    form.onsubmit = handleSubmitManutencao;
+}
+
+// Handler para o submit do formulário de edição
+async function handleEditarManutencao(event) {
+    event.preventDefault();
+    
+    const form = event.target;
+    const veiculoId = document.getElementById('veiculo-id').value;
+    const manutencaoId = form.dataset.manutencaoId;
+    
+    const manutencao = {
+        descricaoServico: document.getElementById('descricao-servico').value,
+        data: document.getElementById('data-manutencao').value,
+        custo: parseFloat(document.getElementById('custo-manutencao').value),
+        quilometragem: document.getElementById('quilometragem').value ? 
+            parseInt(document.getElementById('quilometragem').value) : undefined
+    };
+
+    try {
+        const response = await fetch(`${BACKEND_API_URL}/api/veiculos/${veiculoId}/manutencoes/${manutencaoId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(manutencao)
+        });
+
+        if (!response.ok) {
+            throw new Error('Erro ao atualizar manutenção');
+        }
+
+        exibirNotificacao('Manutenção atualizada com sucesso', 'success');
+        cancelarEdicao();
+        await carregarManutencoes(veiculoId);
+    } catch (error) {
+        console.error('Erro ao atualizar manutenção:', error);
+        exibirNotificacao('Erro ao atualizar manutenção', 'error');
+    }
+}
