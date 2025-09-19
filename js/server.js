@@ -6,7 +6,7 @@ import dotenv from 'dotenv';
 import axios from 'axios';
 import cors from 'cors';
 import mongoose from 'mongoose'; // Mongoose é nosso ORM para o MongoDB
-import Manutencao from './models/Manutencao.js';
+// import Manutencao from './models/Manutencao.js';
 
 // --- Configuração Inicial ---
 dotenv.config();
@@ -18,6 +18,46 @@ const mongoURI = process.env.MONGODB_URI;
 // --- Middlewares ---
 app.use(cors());
 app.use(express.json());
+
+// Função utilitária para tratamento de erros
+const handleError = (error, res, operacao) => {
+    console.error(`Erro durante ${operacao}:`, error);
+    
+    if (error.name === 'ValidationError') {
+        return res.status(400).json({ 
+            error: 'Erro de validação', 
+            details: Object.values(error.errors).map(e => e.message) 
+        });
+    }
+    
+    if (error.name === 'CastError') {
+        return res.status(400).json({ 
+            error: 'ID inválido', 
+            details: error.message 
+        });
+    }
+    
+    if (error.code === 11000) {
+        return res.status(409).json({ 
+            error: 'Conflito de dados', 
+            details: 'Este registro já existe' 
+        });
+    }
+    
+    res.status(500).json({ 
+        error: 'Erro interno do servidor',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+};
+
+// Middleware de logging
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    if (Object.keys(req.body).length > 0) {
+        console.log('Request Body:', JSON.stringify(req.body, null, 2));
+    }
+    next();
+});
 
 // =========================================================================
 // === 1. DEFINIÇÃO DOS SCHEMAS E MODELS (ESTRUTURA DOS DADOS NO MONGO) ===
@@ -197,49 +237,65 @@ app.delete('/api/veiculos/:id', async (req, res) => {
 // Criar uma nova manutenção para um veículo
 app.post('/api/veiculos/:veiculoId/manutencoes', async (req, res) => {
     try {
+        console.log('[POST Manutenção] Iniciando criação de manutenção...');
         const { veiculoId } = req.params;
         
         // Verifica se o veículo existe
+        console.log(`[POST Manutenção] Buscando veículo com ID: ${veiculoId}`);
         const veiculo = await Veiculo.findById(veiculoId);
         if (!veiculo) {
+            console.log(`[POST Manutenção] Veículo não encontrado: ${veiculoId}`);
             return res.status(404).json({ error: 'Veículo não encontrado' });
         }
 
+        // Validação dos dados recebidos
+        console.log('[POST Manutenção] Dados recebidos:', req.body);
+        if (!req.body.descricaoServico || !req.body.data || req.body.custo === undefined) {
+            return res.status(400).json({ 
+                error: 'Dados incompletos',
+                details: 'descricaoServico, data e custo são obrigatórios'
+            });
+        }
+
         // Cria a nova manutenção
+        console.log('[POST Manutenção] Criando nova manutenção...');
         const manutencao = await Manutencao.create({
             ...req.body,
             veiculo: veiculoId
         });
 
+        console.log('[POST Manutenção] Manutenção criada com sucesso:', manutencao);
         res.status(201).json(manutencao);
     } catch (error) {
-        if (error.name === 'ValidationError') {
-            return res.status(400).json({ error: error.message });
-        }
-        console.error('Erro ao criar manutenção:', error);
-        res.status(500).json({ error: 'Erro interno do servidor' });
+        handleError(error, res, 'criação de manutenção');
     }
 });
 
 // Listar todas as manutenções de um veículo
 app.get('/api/veiculos/:veiculoId/manutencoes', async (req, res) => {
     try {
+        console.log('[GET Manutenções] Iniciando busca de manutenções...');
         const { veiculoId } = req.params;
 
         // Verifica se o veículo existe
+        console.log(`[GET Manutenções] Verificando veículo: ${veiculoId}`);
         const veiculo = await Veiculo.findById(veiculoId);
         if (!veiculo) {
+            console.log(`[GET Manutenções] Veículo não encontrado: ${veiculoId}`);
             return res.status(404).json({ error: 'Veículo não encontrado' });
         }
 
         // Busca todas as manutenções do veículo
+        console.log(`[GET Manutenções] Buscando manutenções para o veículo: ${veiculoId}`);
         const manutencoes = await Manutencao.find({ veiculo: veiculoId })
-            .sort({ data: -1 });
+            .sort({ data: -1 })
+            .select('-__v') // Remove o campo __v da resposta
+            .lean(); // Converte para objeto JavaScript puro, mais rápido
 
+        console.log(`[GET Manutenções] Encontradas ${manutencoes.length} manutenções`);
         res.json(manutencoes);
     } catch (error) {
-        console.error('Erro ao listar manutenções:', error);
-        res.status(500).json({ error: 'Erro interno do servidor' });
+        handleError(error, res, 'listagem de manutenções');
     }
 });
 
@@ -364,7 +420,17 @@ async function popularBancoDeDados() {
 // Agora, o servidor só inicia DEPOIS que a conexão com o banco é bem-sucedida.
 
 console.log("Iniciando conexão com o MongoDB Atlas...");
-mongoose.connect(mongoURI)
+mongoose.set('debug', process.env.NODE_ENV === 'development');
+
+// Configurações adicionais do Mongoose para depuração
+const mongooseOptions = {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    serverSelectionTimeoutMS: 5000,
+    socketTimeoutMS: 45000,
+};
+
+mongoose.connect(mongoURI, mongooseOptions)
     .then(() => {
         console.log("✅ Conectado ao MongoDB Atlas com sucesso!");
 

@@ -29,7 +29,7 @@ const somCarga = new Audio("./audio/som_carga.mp3");
 // --- Constantes ---
 const DADOS_VEICULOS_API_URL = './dados_veiculos_api.json';
 // URL do seu servidor backend. Para produção, troque 'http://localhost:3000' pela URL do seu Render.
-const BACKEND_API_URL = 'http://localhost:3000'; 
+const BACKEND_API_URL = 'https://garagem-api.onrender.com'; // URL do seu backend no Render
 
 // --- Funções de Lógica de Veículos e Manutenção ---
 function encontrarVeiculo(placa) {
