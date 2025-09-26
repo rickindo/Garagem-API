@@ -1,18 +1,14 @@
 // Middleware de autenticação
-class Auth {
-    constructor() {
-        this.isAuthenticated = false;
-        this.token = null;
-        this.user = null;
-        this.init();
-    }
-
-    // Inicializa o estado de autenticação
+const Auth = {
+    isAuthenticated: false,
+    token: null,
+    user: null,
+    
     init() {
         this.token = localStorage.getItem('token');
         this.user = JSON.parse(localStorage.getItem('user'));
         this.isAuthenticated = !!this.token;
-    }
+    },
 
     // Registra um novo usuário
     async register(userData) {
@@ -41,7 +37,7 @@ class Auth {
         } catch (error) {
             throw error;
         }
-    }
+    },
 
     // Realiza o login do usuário
     async login(credentials) {
@@ -63,7 +59,7 @@ class Auth {
         } catch (error) {
             throw error;
         }
-    }
+    },
 
     // Realiza o logout do usuário
     logout() {
@@ -72,8 +68,8 @@ class Auth {
         this.isAuthenticated = false;
         localStorage.removeItem('token');
         localStorage.removeItem('user');
-        window.location.href = '/login.html';
-    }
+        window.location.href = 'login.html';
+    },
 
     // Define os dados de autenticação
     setAuthData(data) {
@@ -82,42 +78,44 @@ class Auth {
         this.isAuthenticated = true;
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
-    }
+    },
 
     // Verifica se o usuário está autenticado
     checkAuth() {
         if (!this.isAuthenticated) {
             const currentPath = window.location.pathname;
             if (currentPath !== '/login.html' && currentPath !== '/register.html') {
-                window.location.href = '/login.html';
+                window.location.href = 'login.html';
             }
             return false;
         }
         return true;
-    }
+    },
 
     // Obtém o token de autenticação
     getToken() {
         return this.token;
-    }
+    },
 
     // Obtém os dados do usuário
     getUser() {
         return this.user;
-    }
+    },
 
     // Atualiza os dados do usuário
     updateUser(userData) {
         this.user = { ...this.user, ...userData };
         localStorage.setItem('user', JSON.stringify(this.user));
-    }
+    },
 
     // Verifica se o usuário tem uma determinada permissão
     hasPermission(permission) {
         return this.user && this.user.permissions && this.user.permissions.includes(permission);
     }
-}
+};
 
-// Exporta uma única instância do Auth
-const auth = new Auth();
-export default auth;
+// Inicializa o Auth
+Auth.init();
+
+// Exporta o objeto Auth
+export default Auth;
