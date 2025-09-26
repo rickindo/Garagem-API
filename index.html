@@ -3,33 +3,140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Garagem Conectada - APIs e Viagens</title>
+    <title>Garagem Conectada - Gerenciamento de Frota</title>
     <link rel="stylesheet" href="css/style.css">
+    <script type="module">
+        import auth from './js/middleware/auth.js';
+        import ui from './js/ui.js';
+        
+        // Verifica autenticação
+        if (!auth.checkAuth()) {
+            window.location.href = 'login.html';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = auth.getUser();
+            if (user) {
+                document.getElementById('user-name').textContent = `Olá, ${user.name}!`;
+                // Mostra mensagem de boas-vindas
+                ui.showNotification(`Bem-vindo(a) ao sistema, ${user.name}!`, 'success');
+            }
+
+            // Configura logout
+            document.getElementById('btn-logout').addEventListener('click', () => {
+                logout();
+                window.location.href = 'login.html';
+            });
+        });
+    </script>
 </head>
 <body>
     <div class="container">
-        <h1>Garagem Conectada: APIs e Viagens</h1>
+        <header class="main-header">
+            <h1>Garagem Conectada</h1>
+            <div class="user-info">
+                <span id="user-name"></span>
+                <button id="btn-logout" class="btn-secondary">Sair</button>
+            </div>
+        </header>
 
         <div id="notificacoes-container"></div>
 
-        <div class="section" id="add-vehicle-section">
-            <h2>Adicionar Veículo</h2>
-            <form id="form-add-veiculo">
-                <label for="veiculo-tipo">Tipo:</label>
-                <select id="veiculo-tipo" required>
-                    <option value="Carro">Carro</option>
-                    <option value="CarroEsportivo">Carro Esportivo</option>
-                    <option value="Caminhao">Caminhão</option>
-                </select>
+        <!-- Seção Principal -->
+        <main>
+                <!-- Formulário de Login -->
+                <form id="login-form" class="auth-form">
+                    <h2>Login</h2>
+                    <div class="form-group">
+                        <label for="login-email">E-mail:</label>
+                        <input type="email" id="login-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Senha:</label>
+                        <input type="password" id="login-password" required>
+                    </div>
+                    <button type="submit">Entrar</button>
+                </form>
 
-                <label for="veiculo-placa">Placa:</label>
-                <input type="text" id="veiculo-placa" required placeholder="AAA-1234">
+                <!-- Formulário de Registro -->
+                <form id="register-form" class="auth-form" style="display: none;">
+                    <h2>Registrar</h2>
+                    <div class="form-group">
+                        <label for="register-name">Nome:</label>
+                        <input type="text" id="register-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-email">E-mail:</label>
+                        <input type="email" id="register-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-password">Senha:</label>
+                        <input type="password" id="register-password" required minlength="6">
+                    </div>
+                    <button type="submit">Registrar</button>
+                </form>
+                </div>
+            </div>
+        </div>
 
-                <label for="veiculo-modelo">Modelo:</label>
-                <input type="text" id="veiculo-modelo" required>
+        <!-- Conteúdo Principal (visível apenas após autenticação) -->
+        <div id="main-content" style="display: none;">
+            <!-- Cabeçalho após autenticação -->
+            <div id="app-header">
+                <div class="user-info">
+                    <span id="user-name"></span>
+                    <button id="btn-logout">Sair</button>
+                </div>
+            </div>
 
-                <label for="veiculo-cor">Cor:</label>
-                <input type="text" id="veiculo-cor" required>
+            <!-- Seção da Garagem -->
+            <div id="garage-section" class="section">
+                <div class="section" id="add-vehicle-section">
+                    <h2>Adicionar Veículo</h2>
+                    <form id="form-add-veiculo">
+                        <div class="form-group">
+                            <label for="veiculo-tipo">Tipo:</label>
+                            <select id="veiculo-tipo" required>
+                                <option value="Carro">Carro</option>
+                                <option value="CarroEsportivo">Carro Esportivo</option>
+                                <option value="Caminhao">Caminhão</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="veiculo-placa">Placa:</label>
+                            <input type="text" id="veiculo-placa" required placeholder="AAA-1234">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="veiculo-modelo">Modelo:</label>
+                            <input type="text" id="veiculo-modelo" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="veiculo-cor">Cor:</label>
+                            <input type="text" id="veiculo-cor" required>
+                        </div>
+                        <button type="submit">Adicionar Veículo</button>
+                    </form>
+                </div>
+
+                <!-- Lista de Veículos -->
+                <div class="section" id="vehicles-list-section">
+                    <h2>Meus Veículos</h2>
+                    <div id="veiculos-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/main.js" type="module"></script>
+    <script src="js/veiculo.js" type="module"></script>
+    <script src="js/storage.js" type="module"></script>
+    <script src="js/ui.js" type="module"></script>
+</body>
+</html>
 
                 <div id="campos-carro" class="campos-especificos">
                     <label for="carro-portas">Número de Portas:</label>
@@ -148,10 +255,19 @@
 
     </div>
 
-    <script src="js/manuntencao.js"></script>
-    <script src="js/veiculo.js"></script>
-    <script src="js/storage.js"></script>
-    <script src="js/ui.js"></script>
-    <script src="js/main.js"></script>
+    <link rel="stylesheet" href="css/auth.css">
+    <script type="module">
+        import { initAuth } from './js/auth.js';
+        import './js/manuntencao.js';
+        import './js/veiculo.js';
+        import './js/storage.js';
+        import './js/ui.js';
+        import './js/main.js';
+        
+        // Inicializa a autenticação quando o documento estiver carregado
+        document.addEventListener('DOMContentLoaded', () => {
+            initAuth();
+        });
+    </script>
 </body>
 </html>

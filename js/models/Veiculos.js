@@ -1,9 +1,14 @@
 // models/Veiculo.js
-import mongoose from 'mongoose';
+const mongoose = require('mongoose');
 
 // Esta é a "planta" do seu documento no banco de dados.
 // Define os campos, tipos e regras (validações).
 const veiculoSchema = new mongoose.Schema({
+    owner: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: [true, 'O dono do veículo é obrigatório']
+    },
     placa: { 
         type: String, 
         required: [true, 'A placa é obrigatória.'],
@@ -31,4 +36,4 @@ const veiculoSchema = new mongoose.Schema({
 // A partir da "planta", criamos o Modelo. É ele que vai interagir com o DB.
 const Veiculo = mongoose.model('Veiculo', veiculoSchema);
 
-export default Veiculo;
+module.exports = Veiculo;

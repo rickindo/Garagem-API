@@ -1,10 +1,12 @@
 // js/veiculo.js
 
+import { Manutencao } from './models/ManutencaoFrontend.js';
+
 /**
  * Classe base para todos os veículos da garagem.
  * Inclui funcionalidades de interação e manutenção.
  */
-class Veiculo {
+export class Veiculo {
     /**
      * @param {string} placa - A placa do veículo (identificador único).
      * @param {string} modelo - O modelo do veículo.
@@ -98,7 +100,7 @@ class Veiculo {
 /**
  * Representa um Carro.
  */
-class Carro extends Veiculo {
+export class Carro extends Veiculo {
     constructor(placa, modelo, cor, numPortas = 4) {
         super(placa, modelo, cor);
         this.numPortas = parseInt(numPortas) || 4;
@@ -117,7 +119,7 @@ class Carro extends Veiculo {
 /**
  * Representa um Carro Esportivo.
  */
-class CarroEsportivo extends Carro {
+export class CarroEsportivo extends Carro {
     constructor(placa, modelo, cor, numPortas = 2) {
         super(placa, modelo, cor, numPortas);
         this.turboAtivado = false;
@@ -160,7 +162,7 @@ class CarroEsportivo extends Carro {
 /**
  * Representa um Caminhão.
  */
-class Caminhao extends Veiculo {
+export class Caminhao extends Veiculo {
     constructor(placa, modelo, cor, numEixos = 2, capacidadeCarga = 5000) {
         super(placa, modelo, cor);
         this.numEixos = parseInt(numEixos) || 2;

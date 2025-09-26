@@ -1,23 +1,134 @@
 // js/server.js
 
 // --- Importações ---
-import express from 'express';
-import dotenv from 'dotenv';
-import axios from 'axios';
-import cors from 'cors';
-import mongoose from 'mongoose'; // Mongoose é nosso ORM para o MongoDB
-// import Manutencao from './models/Manutencao.js';
+const express = require('express');
+const dotenv = require('dotenv');
+const axios = require('axios');
+const cors = require('cors');
+const mongoose = require('mongoose');
+const path = require('path');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+const authMiddleware = require('./middleware/auth');
+
+// Importação dos modelos
+const User = require('./models/User');
+const Veiculo = require('./models/Veiculo');
+
+// Configuração do __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // --- Configuração Inicial ---
-dotenv.config();
+// Carrega as variáveis de ambiente do arquivo .env
+dotenv.config({ path: path.join(__dirname, '..', '.env') });
+
 const app = express();
 const port = process.env.PORT || 3000;
 const apiKey = process.env.OPENWEATHER_API_KEY;
 const mongoURI = process.env.MONGODB_URI;
 
+// Verifica se as variáveis de ambiente essenciais estão definidas
+if (!mongoURI) {
+    console.error('ERRO CRÍTICO: Variável de ambiente MONGODB_URI não está definida!');
+    console.error('Certifique-se de que o arquivo .env existe e contém MONGODB_URI=sua_string_de_conexao');
+    process.exit(1);
+}
+
+console.log('Configuração inicial concluída:');
+console.log('- PORT:', port);
+console.log('- MongoDB URI definida:', !!mongoURI);
+console.log('- OpenWeather API Key definida:', !!apiKey);
+
+// Verificação da string de conexão
+console.log('Verificando variáveis de ambiente:');
+console.log('MONGODB_URI:', mongoURI);
+if (!mongoURI) {
+    console.error('ERRO: MONGODB_URI não está definida!');
+    process.exit(1);
+}
+
 // --- Middlewares ---
 app.use(cors());
 app.use(express.json());
+
+// Rotas de Autenticação
+app.post('/api/auth/register', async (req, res) => {
+    try {
+        const { email, password, name } = req.body;
+
+        // Verifica se já existe um usuário com este email
+        const userExists = await User.findOne({ email });
+        if (userExists) {
+            return res.status(400).json({ error: 'Este e-mail já está registrado' });
+        }
+
+        // Cria o novo usuário
+        const user = new User({
+            email,
+            password,
+            name
+        });
+
+        await user.save();
+
+        // Gera o token JWT
+        const token = jwt.sign(
+            { userId: user._id },
+            process.env.JWT_SECRET || 'sua_chave_super_secreta_temporaria',
+            { expiresIn: '24h' }
+        );
+
+        res.status(201).json({
+            token,
+            user: {
+                id: user._id,
+                email: user.email,
+                name: user.name
+            }
+        });
+    } catch (error) {
+        console.error('Erro no registro:', error);
+        res.status(500).json({ error: 'Erro ao registrar usuário' });
+    }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        // Busca o usuário
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(400).json({ error: 'E-mail ou senha inválidos' });
+        }
+
+        // Verifica a senha
+        const isValid = await user.comparePassword(password);
+        if (!isValid) {
+            return res.status(400).json({ error: 'E-mail ou senha inválidos' });
+        }
+
+        // Gera o token JWT
+        const token = jwt.sign(
+            { userId: user._id },
+            process.env.JWT_SECRET || 'sua_chave_super_secreta_temporaria',
+            { expiresIn: '24h' }
+        );
+
+        res.json({
+            token,
+            user: {
+                id: user._id,
+                email: user.email,
+                name: user.name
+            }
+        });
+    } catch (error) {
+        console.error('Erro no login:', error);
+        res.status(500).json({ error: 'Erro ao fazer login' });
+    }
+});
 
 // Função utilitária para tratamento de erros
 const handleError = (error, res, operacao) => {
@@ -420,16 +531,21 @@ async function popularBancoDeDados() {
 // Agora, o servidor só inicia DEPOIS que a conexão com o banco é bem-sucedida.
 
 console.log("Iniciando conexão com o MongoDB Atlas...");
+console.log("String de conexão:", mongoURI);
+
+// Habilita logs detalhados do Mongoose em desenvolvimento
 mongoose.set('debug', process.env.NODE_ENV === 'development');
 
-// Configurações adicionais do Mongoose para depuração
+// Configurações do Mongoose
 const mongooseOptions = {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    serverSelectionTimeoutMS: 5000,
+    serverSelectionTimeoutMS: 10000, // Tempo limite aumentado para 10s
     socketTimeoutMS: 45000,
+    family: 4 // Força IPv4
 };
 
+// Tenta conectar ao MongoDB
 mongoose.connect(mongoURI, mongooseOptions)
     .then(() => {
         console.log("✅ Conectado ao MongoDB Atlas com sucesso!");

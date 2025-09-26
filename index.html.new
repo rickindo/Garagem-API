@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Garagem Conectada - Gerenciamento de Frota</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="main-header">
+            <h1>Garagem Conectada</h1>
+            <div class="user-info">
+                <span id="user-name"></span>
+                <button id="btn-logout" class="btn-secondary">Sair</button>
+            </div>
+        </header>
+
+        <div id="notificacoes-container"></div>
+
+        <main>
+            <!-- Seção de Adicionar Veículo -->
+            <section id="add-vehicle-section" class="card">
+                <h2>Adicionar Veículo</h2>
+                <form id="form-add-veiculo">
+                    <div class="form-group">
+                        <label for="veiculo-tipo">Tipo</label>
+                        <select id="veiculo-tipo" required>
+                            <option value="Carro">Carro</option>
+                            <option value="CarroEsportivo">Carro Esportivo</option>
+                            <option value="Caminhao">Caminhão</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="veiculo-placa">Placa</label>
+                        <input type="text" id="veiculo-placa" required placeholder="AAA-1234">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="veiculo-modelo">Modelo</label>
+                        <input type="text" id="veiculo-modelo" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="veiculo-cor">Cor</label>
+                        <input type="text" id="veiculo-cor" required>
+                    </div>
+
+                    <div id="campos-especificos">
+                        <!-- Campos específicos para cada tipo de veículo -->
+                        <div id="campos-carro" class="campos-tipo">
+                            <div class="form-group">
+                                <label for="carro-portas">Número de Portas</label>
+                                <input type="number" id="carro-portas" value="4" min="2">
+                            </div>
+                        </div>
+
+                        <div id="campos-carroesportivo" class="campos-tipo" style="display: none;">
+                            <div class="form-group">
+                                <label for="carroesportivo-portas">Número de Portas</label>
+                                <input type="number" id="carroesportivo-portas" value="2" min="2">
+                            </div>
+                        </div>
+
+                        <div id="campos-caminhao" class="campos-tipo" style="display: none;">
+                            <div class="form-group">
+                                <label for="caminhao-eixos">Número de Eixos</label>
+                                <input type="number" id="caminhao-eixos" value="2" min="2">
+                            </div>
+                            <div class="form-group">
+                                <label for="caminhao-capacidade">Capacidade de Carga (kg)</label>
+                                <input type="number" id="caminhao-capacidade" value="5000" min="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-primary">Adicionar Veículo</button>
+                </form>
+            </section>
+
+            <!-- Lista de Veículos -->
+            <section id="vehicles-list-section" class="card">
+                <h2>Meus Veículos</h2>
+                <div id="veiculos-list" class="vehicles-grid">
+                    <!-- Os veículos serão inseridos aqui dinamicamente -->
+                </div>
+            </section>
+
+            <!-- Modal de Detalhes do Veículo -->
+            <div id="vehicle-details-modal" class="modal" style="display: none;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>Detalhes do Veículo</h2>
+                        <button class="btn-close">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="vehicle-info"></div>
+                        <div class="vehicle-actions">
+                            <button id="btn-ligar" class="btn-action">Ligar</button>
+                            <button id="btn-desligar" class="btn-action">Desligar</button>
+                            <button id="btn-acelerar" class="btn-action">Acelerar</button>
+                            <button id="btn-buzinar" class="btn-action">Buzinar</button>
+                            <button id="btn-turbo" class="btn-action btn-especifico">Turbo</button>
+                            <button id="btn-carregar" class="btn-action btn-especifico">Carregar</button>
+                            <button id="btn-descarregar" class="btn-action btn-especifico">Descarregar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script type="module">
+        import { isAuthenticated, getUser, logout } from './js/auth.js';
+        
+        // Verifica autenticação
+        if (!isAuthenticated()) {
+            window.location.href = 'login.html';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = getUser();
+            if (user) {
+                document.getElementById('user-name').textContent = `Olá, ${user.name}!`;
+            }
+
+            // Configura logout
+            document.getElementById('btn-logout').addEventListener('click', () => {
+                logout();
+                window.location.href = 'login.html';
+            });
+        });
+    </script>
+
+    <!-- Scripts -->
+    <script src="js/veiculo.js" type="module"></script>
+    <script src="js/storage.js" type="module"></script>
+    <script src="js/ui.js" type="module"></script>
+    <script src="js/main.js" type="module"></script>
+</body>
+</html>

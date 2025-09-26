@@ -1,5 +1,25 @@
 // js/main.js
 
+import { 
+    salvarVeiculo,
+    salvarGaragem,
+    carregarGaragem,
+    excluirVeiculo,
+    reconstruirVeiculo,
+    salvarManutencao
+} from './storage.js';
+
+import {
+    Manutencao
+} from './models/ManutencaoFrontend.js';
+
+import {
+    Veiculo,
+    Carro,
+    CarroEsportivo,
+    Caminhao
+} from './veiculo.js';
+
 // --- Estado da Aplicação ---
 window.veiculos = window.veiculos || [];
 let garagem = window.veiculos;
@@ -36,7 +56,7 @@ function encontrarVeiculo(placa) {
     return window.veiculos.find(v => v.placa === placa);
 }
 
-function handleAddVeiculo(event) {
+async function handleAddVeiculo(event) {
     event.preventDefault();
     const tipo = document.getElementById('veiculo-tipo').value;
     const placa = document.getElementById('veiculo-placa').value.trim().toUpperCase();
@@ -44,10 +64,46 @@ function handleAddVeiculo(event) {
     const cor = document.getElementById('veiculo-cor').value.trim();
 
     if (!placa || !modelo || !cor) {
-        exibirNotificacao("Placa, modelo e cor são obrigatórios.", "error"); return;
+        exibirNotificacao("Placa, modelo e cor são obrigatórios.", "error"); 
+        return;
     }
-    if (encontrarVeiculo(placa)) {
-        exibirNotificacao(`Placa ${placa} já existe.`, "error"); return;
+
+    try {
+        // Verifica se já existe um veículo com esta placa
+        const response = await fetch(`${BACKEND_API_URL}/api/veiculos/busca?placa=${placa}`);
+        const veiculosExistentes = await response.json();
+        
+        if (veiculosExistentes.length > 0) {
+            exibirNotificacao(`Placa ${placa} já existe.`, "error");
+            return;
+        }
+
+        // Cria o novo veículo
+        const novoVeiculo = { tipo, placa, modelo, cor };
+        
+        const addResponse = await fetch(`${BACKEND_API_URL}/api/veiculos`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(novoVeiculo)
+        });
+
+        if (!addResponse.ok) {
+            throw new Error('Erro ao adicionar veículo');
+        }
+
+        const veiculoAdicionado = await addResponse.json();
+        
+        // Atualiza a UI
+        atualizarListaVeiculos();
+        exibirNotificacao(`Veículo ${placa} adicionado com sucesso!`, "success");
+        
+        // Limpa o formulário
+        document.getElementById('form-veiculo').reset();
+    } catch (error) {
+        console.error('Erro ao adicionar veículo:', error);
+        exibirNotificacao('Erro ao adicionar veículo. Por favor, tente novamente.', "error");
     }
 
     let novoVeiculo = null;
@@ -82,7 +138,7 @@ function handleAddVeiculo(event) {
     }
 }
 
-function handleAgendarManutencao(event) {
+async function handleAgendarManutencao(event) {
     event.preventDefault();
     const placa = document.getElementById('agendamento-veiculo-placa').value;
     const data = document.getElementById('agenda-data').value;
@@ -91,30 +147,36 @@ function handleAgendarManutencao(event) {
     const descricao = document.getElementById('agenda-descricao').value.trim();
 
     if (!placa || !data || !tipo || custo === '') {
-        exibirNotificacao("Preencha Data, Tipo e Custo.", "error"); return;
+        exibirNotificacao("Preencha Data, Tipo e Custo.", "error"); 
+        return;
     }
     if (parseFloat(custo) < 0) {
-        exibirNotificacao("Custo não pode ser negativo.", "error"); return;
+        exibirNotificacao("Custo não pode ser negativo.", "error"); 
+        return;
     }
 
     const veiculo = encontrarVeiculo(placa);
     if (!veiculo) {
-        exibirNotificacao(`Veículo ${placa} não encontrado.`, "error"); return;
+        exibirNotificacao(`Veículo ${placa} não encontrado.`, "error"); 
+        return;
     }
 
     try {
         const novaManutencao = new Manutencao(data, tipo, parseFloat(custo), descricao);
         if (!novaManutencao.validar()) {
-            exibirNotificacao("Dados da manutenção inválidos (verifique data, tipo e custo).", "warning"); return;
+            exibirNotificacao("Dados da manutenção inválidos (verifique data, tipo e custo).", "warning"); 
+            return;
         }
-        if (veiculo.adicionarManutencao(novaManutencao)) {
-            salvarGaragem(window.veiculos);
-            exibirDetalhesCompletos(veiculo);
-            exibirNotificacao(`Manutenção para ${placa} agendada!`, "success");
-            limparFormulario('form-agendamento');
-        } else {
-            exibirNotificacao("Não foi possível adicionar a manutenção (verifique o console).", "error");
-        }
+
+        // Salva a manutenção no banco de dados
+        await salvarManutencao(veiculo._id, novaManutencao);
+
+        // Atualiza a UI
+        veiculo.adicionarManutencao(novaManutencao);
+        await salvarVeiculo(veiculo);
+        exibirDetalhesCompletos(veiculo);
+        exibirNotificacao(`Manutenção para ${placa} agendada!`, "success");
+        limparFormulario('form-agendamento');
     } catch(error) {
         console.error("Erro ao agendar:", error);
         exibirNotificacao(`Erro ao agendar: ${error.message}`, "error");
@@ -195,7 +257,7 @@ async function handleVerDetalhesExtras() {
     }
 }
 
-function handleInteracao(acao) {
+async function handleInteracao(acao) {
     if (!veiculoAtualPlaca) {
         exibirNotificacao("Nenhum veículo selecionado para interação.", "error");
         return;
@@ -257,8 +319,8 @@ function handleInteracao(acao) {
             console.warn("Áudio não está pronto para tocar:", somParaTocar.src, somParaTocar.readyState);
         }
 
-        atualizarDetalhesInteracao(veiculo); 
-        salvarGaragem(garagem); 
+        await salvarVeiculo(veiculo);
+        atualizarDetalhesInteracao(veiculo);
 
     } catch (error) {
         console.error(`Erro durante a ação ${acao}:`, error);
@@ -482,13 +544,40 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (previsaoFiltrosContainer) previsaoFiltrosContainer.style.display = 'none';
 
-    window.veiculos = carregarGaragem();
-    exibirVeiculos(window.veiculos);
+    atualizarListaVeiculos();
     atualizarCamposEspecificos();
 
     if (formAddVeiculo) formAddVeiculo.addEventListener('submit', handleAddVeiculo);
-    if (formAgendamento) formAgendamento.addEventListener('submit', handleAgendarManutencao);
-    if (listaGaragemElement) listaGaragemElement.addEventListener('click', handleClickDetalhesGaragem);
+    if (formAgendamento)     formAgendamento.addEventListener('submit', async (event) => {
+        try {
+            await handleAgendarManutencao(event);
+        } catch(error) {
+            console.error("Erro no formulário de agendamento:", error);
+            exibirNotificacao("Erro ao processar agendamento.", "error");
+        }
+    });
+    if (listaGaragemElement) {
+        listaGaragemElement.addEventListener('click', handleClickDetalhesGaragem);
+        listaGaragemElement.addEventListener('click', async (event) => {
+            if (event.target.classList.contains('btn-excluir')) {
+                const placa = event.target.dataset.placa;
+                if (confirm(`Tem certeza que deseja excluir o veículo ${placa}?`)) {
+                    try {
+                        const veiculo = window.veiculos.find(v => v.placa === placa);
+                        if (!veiculo) {
+                            throw new Error('Veículo não encontrado');
+                        }
+                        await excluirVeiculo(veiculo._id);
+                        await atualizarListaVeiculos();
+                        exibirNotificacao(`Veículo ${placa} excluído com sucesso!`, "success");
+                    } catch (error) {
+                        console.error('Erro ao excluir veículo:', error);
+                        exibirNotificacao(`Erro ao excluir veículo ${placa}`, "error");
+                    }
+                }
+            }
+        });
+    }
 
     if (btnVoltarGaragem) {
         btnVoltarGaragem.addEventListener('click', () => {
@@ -502,7 +591,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const btn = document.getElementById(id);
         if (btn) {
             const acao = id.replace('btn-detail-', '');
-            btn.addEventListener('click', () => handleInteracao(acao));
+            btn.addEventListener('click', async () => {
+                try {
+                    await handleInteracao(acao);
+                } catch (error) {
+                    console.error('Erro na interação:', error);
+                    exibirNotificacao(`Erro ao executar ação: ${error.message}`, "error");
+                }
+            });
         }
     });
 
@@ -544,13 +640,19 @@ document.addEventListener('DOMContentLoaded', () => {
         btnBuscarDicasEspecificas.addEventListener('click', handleBuscarDicasEspecificas);
     }
 
-    // === INÍCIO ATIVIDADE B2.P1.A9: Chamar as novas funções no carregamento da página ===
-    carregarVeiculosDestaque();
-    carregarServicosGaragem();
-    // === FIM ATIVIDADE B2.P1.A9 ===
+    // Carrega as funções principais da aplicação apenas se o usuário estiver autenticado
+    const loadMainApp = () => {
+        // === INÍCIO ATIVIDADE B2.P1.A9: Chamar as novas funções no carregamento da página ===
+        carregarVeiculosDestaque();
+        carregarServicosGaragem();
+        // === FIM ATIVIDADE B2.P1.A9 ===
 
-    verificarAgendamentos();
-    console.log("Garagem Conectada (com Arsenal de Dados) inicializada.");
+        verificarAgendamentos();
+        console.log("Garagem Conectada (com Arsenal de Dados) inicializada.");
+    };
 
-    // Removido: listeners duplicados de excluir/editar. A lógica está no ui.js
+    // Verifica o estado de autenticação e carrega a aplicação se necessário
+    if (localStorage.getItem('token')) {
+        loadMainApp();
+    }
 });
