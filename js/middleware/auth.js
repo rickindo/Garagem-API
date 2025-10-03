@@ -1,121 +1,137 @@
-// Middleware de autenticação
-const Auth = {
-    isAuthenticated: false,
+/**
+ * Módulo de autenticação do front-end
+ */
+const auth = {
     token: null,
     user: null,
-    
+
+    /**
+     * Inicializa o estado de autenticação
+     */
     init() {
         this.token = localStorage.getItem('token');
         this.user = JSON.parse(localStorage.getItem('user'));
-        this.isAuthenticated = !!this.token;
+        return this.checkAuth();
     },
 
-    // Registra um novo usuário
+    /**
+     * Registra um novo usuário
+     * @param {Object} userData - Dados do usuário (name, email, password)
+     */
     async register(userData) {
         try {
-            // Salvar no banco de dados usando a API
             const response = await fetch('https://garagem-api-five.vercel.app/users/register', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify(userData)
             });
 
+            const data = await response.json();
+            
             if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.message || 'Erro no registro');
+                throw new Error(data.message || 'Erro no registro');
             }
 
-            const data = await response.json();
-            this.setAuthData(data);
+            this.token = data.token;
+            this.user = data.user;
             
-            // Aguarda um momento para garantir que os dados foram salvos
-            setTimeout(() => {
-                window.location.href = 'index.html';
-            }, 100);
+            localStorage.setItem('token', this.token);
+            localStorage.setItem('user', JSON.stringify(this.user));
             
-            return data;
+            return { success: true, data };
+            
         } catch (error) {
-            throw error;
+            return { success: false, error: error.message };
         }
     },
 
-    // Realiza o login do usuário
+    /**
+     * Faz login do usuário
+     * @param {Object} credentials - Credenciais (email, password)
+     */
     async login(credentials) {
         try {
             const response = await fetch('https://garagem-api-five.vercel.app/users/login', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify(credentials)
             });
 
+            const data = await response.json();
+            
             if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.message || 'Erro no login');
+                throw new Error(data.message || 'Erro no login');
             }
 
-            const data = await response.json();
-            this.setAuthData(data);
-            return data;
+            this.token = data.token;
+            this.user = data.user;
+            
+            localStorage.setItem('token', this.token);
+            localStorage.setItem('user', JSON.stringify(this.user));
+            
+            return { success: true, data };
+            
         } catch (error) {
-            throw error;
+            return { success: false, error: error.message };
         }
     },
 
-    // Realiza o logout do usuário
-    logout() {
-        this.token = null;
-        this.user = null;
-        this.isAuthenticated = false;
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        window.location.href = 'login.html';
-    },
-
-    // Define os dados de autenticação
-    setAuthData(data) {
-        this.token = data.token;
-        this.user = data.user;
-        this.isAuthenticated = true;
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-    },
-
-    // Verifica se o usuário está autenticado
+    /**
+     * Verifica se o usuário está autenticado
+     */
     checkAuth() {
-        if (!this.isAuthenticated) {
-            const currentPath = window.location.pathname;
-            if (currentPath !== '/login.html' && currentPath !== '/register.html') {
-                window.location.href = 'login.html';
-            }
+        const isAuthenticated = !!this.token;
+        
+        if (!isAuthenticated) {
+            this.redirectToLogin();
             return false;
         }
+        
         return true;
     },
 
-    // Obtém o token de autenticação
-    getToken() {
-        return this.token;
+    /**
+     * Redireciona para a página de login
+     */
+    redirectToLogin() {
+        const currentPath = window.location.pathname;
+        if (!currentPath.includes('login.html') && !currentPath.includes('register.html')) {
+            window.location.href = 'login.html';
+        }
     },
 
-    // Obtém os dados do usuário
+    /**
+     * Faz logout do usuário
+     */
+    logout() {
+        this.token = null;
+        this.user = null;
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        this.redirectToLogin();
+    },
+
+    /**
+     * Obtém os dados do usuário
+     */
     getUser() {
         return this.user;
     },
 
-    // Atualiza os dados do usuário
-    updateUser(userData) {
-        this.user = { ...this.user, ...userData };
-        localStorage.setItem('user', JSON.stringify(this.user));
-    },
-
-    // Verifica se o usuário tem uma determinada permissão
-    hasPermission(permission) {
-        return this.user && this.user.permissions && this.user.permissions.includes(permission);
+    /**
+     * Obtém o token do usuário
+     */
+    getToken() {
+        return this.token;
     }
 };
 
-// Inicializa o Auth
-Auth.init();
+// Inicializa o auth quando o módulo é carregado
+auth.init();
 
-// Exporta o objeto Auth
-export default Auth;
+// Exporta o módulo
+export default auth;

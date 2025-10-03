@@ -1,0 +1,641 @@
+const express = require('express');const express = require('express');const express = require('express');
+
+const dotenv = require('dotenv');
+
+const cors = require('cors');const dotenv = require('dotenv');const dotenv = require('dotenv');
+
+const mongoose = require('mongoose');
+
+const path = require('path');const cors = require('cors');const axios = requir        // Gera o token JWT
+
+const jwt = require('jsonwebtoken');
+
+const bcrypt = require('bcryptjs');const mongoose = require('mongoose');        const token = jwt.sign(
+
+
+
+// Configuração inicialconst path = require('path');            { id: user._id },
+
+dotenv.config();
+
+const jwt = require('jsonwebtoken');            process.env.JWT_SECRET || 'sua_chave_secreta',
+
+const app = express();
+
+const port = process.env.PORT || 3000;const bcrypt = require('bcryptjs');            { expiresIn: '24h' }
+
+const mongoURI = process.env.MONGODB_URI || 'mongodb+srv://luizclaudiolc:luizinho123@clusterpw.i6b5pea.mongodb.net/';
+
+        );
+
+// Middlewares
+
+app.use(cors());// Configuração inicial
+
+app.use(express.json());
+
+app.use(express.static(path.join(__dirname, '..')));dotenv.config();        // Prepara o objeto do usuário para a resposta
+
+
+
+// Conexão com MongoDB        const userResponse = {
+
+mongoose.connect(mongoURI)
+
+    .then(() => console.log('Conectado ao MongoDB'))const app = express();            id: user._id,
+
+    .catch(err => console.error('Erro ao conectar ao MongoDB:', err));
+
+const port = process.env.PORT || 3000;            name: user.name,
+
+// Modelo de Usuário
+
+const UserSchema = new mongoose.Schema({const mongoURI = process.env.MONGODB_URI || 'mongodb+srv://luizclaudiolc:luizinho123@clusterpw.i6b5pea.mongodb.net/';            email: user.email
+
+    name: { type: String, required: true },
+
+    email: { type: String, required: true, unique: true },        };
+
+    password: { type: String, required: true }
+
+});// Middlewares
+
+
+
+const User = mongoose.model('User', UserSchema);app.use(cors());        // Remove a senha antes de enviar
+
+
+
+// Modelo de Veículoapp.use(express.json());        delete userResponse.password;
+
+const VeiculoSchema = new mongoose.Schema({
+
+    placa: { type: String, required: true },app.use(express.static(path.join(__dirname, '..')));
+
+    marca: { type: String, required: true },
+
+    modelo: { type: String, required: true },        res.status(201).json({
+
+    ano: { type: Number, required: true },
+
+    quilometragem: { type: Number, required: true },// Conexão com MongoDB            message: 'Usuário registrado com sucesso',
+
+    status: { type: String, required: true },
+
+    tipo: { type: String, required: true },mongoose.connect(mongoURI)            token,
+
+    ultimaManutencao: { type: Date },
+
+    proximaManutencao: { type: Date },    .then(() => console.log('Conectado ao MongoDB'))            user: userResponse
+
+    observacoes: { type: String }
+
+});    .catch(err => console.error('Erro ao conectar ao MongoDB:', err));        });ors = require('cors');
+
+
+
+const Veiculo = mongoose.model('Veiculo', VeiculoSchema);const mongoose = require('mongoose');
+
+
+
+// Middleware de autenticação// Modelo de Usuárioconst path = require('path');
+
+const authMiddleware = (req, res, next) => {
+
+    const token = req.header('Authorization')?.replace('Bearer ', '');const UserSchema = new mongoose.Schema({const jwt = require('jsonwebtoken');
+
+
+
+    if (!token) {    name: { type: String, required: true },const bcrypt = require('bcryptjs');
+
+        return res.status(401).json({ message: 'Token não fornecido' });
+
+    }    email: { type: String, required: true, unique: true },
+
+
+
+    try {    password: { type: String, required: true }// Configuração inicial
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'sua_chave_secreta');
+
+        req.userId = decoded.id;});dotenv.config();
+
+        next();
+
+    } catch (error) {
+
+        res.status(401).json({ message: 'Token inválido' });
+
+    }const User = mongoose.model('User', UserSchema);const app = express();
+
+};
+
+const port = process.env.PORT || 3000;
+
+// Rotas de Autenticação
+
+app.post('/users/register', async (req, res) => {// Modelo de Veículoconst mongoURI = process.env.MONGODB_URI || 'mongodb+srv://luizclaudiolc:luizinho123@clusterpw.i6b5pea.mongodb.net/';
+
+    try {
+
+        const { name, email, password } = req.body;const VeiculoSchema = new mongoose.Schema({
+
+
+
+        // Verifica se o usuário já existe    placa: { type: String, required: true },// Middlewares
+
+        const userExists = await User.findOne({ email });
+
+        if (userExists) {    marca: { type: String, required: true },app.use(cors());
+
+            return res.status(400).json({ message: 'Este email já está em uso' });
+
+        }    modelo: { type: String, required: true },app.use(express.json());
+
+
+
+        // Cria o hash da senha    ano: { type: Number, required: true },app.use(express.static(path.join(__dirname, '..')));
+
+        const salt = await bcrypt.genSalt(10);
+
+        const hashedPassword = await bcrypt.hash(password, salt);    quilometragem: { type: Number, required: true },
+
+
+
+        // Cria o usuário    status: { type: String, required: true },// Conexão com MongoDB
+
+        const user = new User({
+
+            name,    tipo: { type: String, required: true },mongoose.connect(mongoURI)
+
+            email,
+
+            password: hashedPassword    ultimaManutencao: { type: Date },    .then(() => console.log('Conectado ao MongoDB'))
+
+        });
+
+    proximaManutencao: { type: Date },    .catch(err => console.error('Erro ao conectar ao MongoDB:', err));
+
+        await user.save();
+
+    observacoes: { type: String }
+
+        // Gera o token JWT
+
+        const token = jwt.sign(});// Modelo de Usuário
+
+            { id: user._id },
+
+            process.env.JWT_SECRET || 'sua_chave_secreta',const UserSchema = new mongoose.Schema({
+
+            { expiresIn: '24h' }
+
+        );const Veiculo = mongoose.model('Veiculo', VeiculoSchema);    name: { type: String, required: true },
+
+
+
+        // Prepara o objeto do usuário para a resposta    email: { type: String, required: true, unique: true },
+
+        const userResponse = {
+
+            id: user._id,// Middleware de autenticação    password: { type: String, required: true }
+
+            name: user.name,
+
+            email: user.emailconst authMiddleware = (req, res, next) => {});
+
+        };
+
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+
+        res.status(201).json({
+
+            message: 'Usuário registrado com sucesso',const User = mongoose.model('User', UserSchema);
+
+            token,
+
+            user: userResponse    if (!token) {
+
+        });
+
+    } catch (error) {        return res.status(401).json({ message: 'Token não fornecido' });// Modelo de Veículo
+
+        res.status(500).json({ message: 'Erro ao registrar usuário', error: error.message });
+
+    }    }const VeiculoSchema = new mongoose.Schema({
+
+});
+
+    placa: { type: String, required: true },
+
+app.post('/users/login', async (req, res) => {
+
+    try {    try {    marca: { type: String, required: true },
+
+        const { email, password } = req.body;
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'sua_chave_secreta');    modelo: { type: String, required: true },
+
+        // Verifica se o usuário existe
+
+        const user = await User.findOne({ email });        req.userId = decoded.id;    ano: { type: Number, required: true },
+
+        if (!user) {
+
+            return res.status(401).json({ message: 'Email ou senha incorretos' });        next();    quilometragem: { type: Number, required: true },
+
+        }
+
+    } catch (error) {    status: { type: String, required: true },
+
+        // Verifica a senha
+
+        const isMatch = await bcrypt.compare(password, user.password);        res.status(401).json({ message: 'Token inválido' });    tipo: { type: String, required: true },
+
+        if (!isMatch) {
+
+            return res.status(401).json({ message: 'Email ou senha incorretos' });    }    ultimaManutencao: { type: Date },
+
+        }
+
+};    proximaManutencao: { type: Date },
+
+        // Gera o token JWT
+
+        const token = jwt.sign(    observacoes: { type: String }
+
+            { id: user._id },
+
+            process.env.JWT_SECRET || 'sua_chave_secreta',// Rotas de Autenticação});
+
+            { expiresIn: '24h' }
+
+        );app.post('/users/register', async (req, res) => {
+
+
+
+        // Prepara o objeto do usuário para a resposta    try {const Veiculo = mongoose.model('Veiculo', VeiculoSchema);
+
+        const userResponse = {
+
+            id: user._id,        const { name, email, password } = req.body;
+
+            name: user.name,
+
+            email: user.email// Middleware de autenticação
+
+        };
+
+        // Verifica se o usuário já existeconst authMiddleware = (req, res, next) => {
+
+        res.json({
+
+            message: 'Login realizado com sucesso',        const userExists = await User.findOne({ email });    const token = req.header('Authorization')?.replace('Bearer ', '');
+
+            token,
+
+            user: userResponse        if (userExists) {
+
+        });
+
+    } catch (error) {            return res.status(400).json({ message: 'Este email já está em uso' });    if (!token) {
+
+        res.status(500).json({ message: 'Erro ao fazer login', error: error.message });
+
+    }        }        return res.status(401).json({ message: 'Token não fornecido' });
+
+});
+
+    }
+
+// Rotas protegidas
+
+app.use('/api', authMiddleware);        // Cria o hash da senha
+
+
+
+// Rotas de Veículos        const salt = await bcrypt.genSalt(10);    try {
+
+app.get('/api/veiculos', async (req, res) => {
+
+    try {        const hashedPassword = await bcrypt.hash(password, salt);        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'sua_chave_secreta');
+
+        const veiculos = await Veiculo.find();
+
+        res.json(veiculos);        req.userId = decoded.id;
+
+    } catch (error) {
+
+        res.status(500).json({ message: 'Erro ao buscar veículos', error: error.message });        // Cria o usuário        next();
+
+    }
+
+});        const user = new User({    } catch (error) {
+
+
+
+app.post('/api/veiculos', async (req, res) => {            name,        res.status(401).json({ message: 'Token inválido' });
+
+    try {
+
+        const veiculo = new Veiculo(req.body);            email,    }
+
+        await veiculo.save();
+
+        res.status(201).json(veiculo);            password: hashedPassword};
+
+    } catch (error) {
+
+        res.status(500).json({ message: 'Erro ao criar veículo', error: error.message });        });
+
+    }
+
+});// Rotas de Autenticação
+
+
+
+app.put('/api/veiculos/:id', async (req, res) => {        await user.save();app.post('/users/register', async (req, res) => {
+
+    try {
+
+        const veiculo = await Veiculo.findByIdAndUpdate(req.params.id, req.body, { new: true });    try {
+
+        if (!veiculo) {
+
+            return res.status(404).json({ message: 'Veículo não encontrado' });        // Gera o token JWT        const { name, email, password } = req.body;
+
+        }
+
+        res.json(veiculo);        const token = jwt.sign(
+
+    } catch (error) {
+
+        res.status(500).json({ message: 'Erro ao atualizar veículo', error: error.message });            { id: user._id },        // Verifica se o usuário já existe
+
+    }
+
+});            process.env.JWT_SECRET || 'sua_chave_secreta',        const userExists = await User.findOne({ email });
+
+
+
+app.delete('/api/veiculos/:id', async (req, res) => {            { expiresIn: '24h' }        if (userExists) {
+
+    try {
+
+        const veiculo = await Veiculo.findByIdAndDelete(req.params.id);        );            return res.status(400).json({ message: 'Este email já está em uso' });
+
+        if (!veiculo) {
+
+            return res.status(404).json({ message: 'Veículo não encontrado' });        }
+
+        }
+
+        res.json({ message: 'Veículo removido com sucesso' });        // Prepara o objeto do usuário para a resposta
+
+    } catch (error) {
+
+        res.status(500).json({ message: 'Erro ao remover veículo', error: error.message });        const userResponse = {        // Cria o hash da senha
+
+    }
+
+});            id: user._id,        const salt = await bcrypt.genSalt(10);
+
+
+
+// Inicia o servidor            name: user.name,        const hashedPassword = await bcrypt.hash(password, salt);
+
+app.listen(port, () => {
+
+    console.log(`Servidor rodando na porta ${port}`);            email: user.email
+
+});
+        };        // Cria o usuário
+
+        const user = new User({
+
+        res.status(201).json({            name,
+
+            message: 'Usuário registrado com sucesso',            email,
+
+            token,            password: hashedPassword
+
+            user: userResponse        });
+
+        });
+
+    } catch (error) {        await user.save();
+
+        res.status(500).json({ message: 'Erro ao registrar usuário', error: error.message });
+
+    }        // Gera o token JWT
+
+});        const token = jwt.sign(
+
+            { id: user._id },
+
+app.post('/users/login', async (req, res) => {            process.env.JWT_SECRET || 'sua_chave_secreta',
+
+    try {            { expiresIn: '24h' }
+
+        const { email, password } = req.body;        );
+
+
+
+        // Verifica se o usuário existe        // Prepara o objeto do usuário para a resposta
+
+        const user = await User.findOne({ email });        const userResponse = {
+
+        if (!user) {            id: user._id,
+
+            return res.status(401).json({ message: 'Email ou senha incorretos' });            name: user.name,
+
+        }            email: user.email
+
+        };
+
+        // Verifica a senha
+
+        const isMatch = await bcrypt.compare(password, user.password);        res.status(201).json({
+
+        if (!isMatch) {            message: 'Usuário registrado com sucesso',
+
+            return res.status(401).json({ message: 'Email ou senha incorretos' });            token,
+
+        }            user: userResponse
+
+        });
+
+        // Gera o token JWT        delete userResponse.password;
+
+        const token = jwt.sign(
+
+            { id: user._id },        res.status(201).json({
+
+            process.env.JWT_SECRET || 'sua_chave_secreta',            token,
+
+            { expiresIn: '24h' }            user: userResponse,
+
+        );            message: 'Usuário registrado com sucesso'
+
+        });
+
+        // Prepara o objeto do usuário para a resposta    } catch (error) {
+
+        const userResponse = {        res.status(500).json({ message: 'Erro ao registrar usuário', error: error.message });
+
+            id: user._id,    }
+
+            name: user.name,});
+
+            email: user.email
+
+        };app.post('/users/login', async (req, res) => {
+
+    try {
+
+        res.json({        const { email, password } = req.body;
+
+            message: 'Login realizado com sucesso',
+
+            token,        // Verifica se o usuário existe
+
+            user: userResponse        const user = await User.findOne({ email });
+
+        });        if (!user) {
+
+    } catch (error) {            return res.status(401).json({ message: 'Email ou senha incorretos' });
+
+        res.status(500).json({ message: 'Erro ao fazer login', error: error.message });        }
+
+    }
+
+});        // Verifica a senha
+
+        const isMatch = await bcrypt.compare(password, user.password);
+
+// Rotas protegidas        if (!isMatch) {
+
+app.use('/api', authMiddleware);            return res.status(401).json({ message: 'Email ou senha incorretos' });
+
+        }
+
+// Rotas de Veículos
+
+app.get('/api/veiculos', async (req, res) => {        // Gera o token JWT
+
+    try {        const token = jwt.sign(
+
+        const veiculos = await Veiculo.find();            { id: user._id },
+
+        res.json(veiculos);            process.env.JWT_SECRET || 'sua_chave_secreta',
+
+    } catch (error) {            { expiresIn: '24h' }
+
+        res.status(500).json({ message: 'Erro ao buscar veículos', error: error.message });        );
+
+    }
+
+});        // Remove a senha antes de enviar a resposta
+
+        const userResponse = user.toObject();
+
+app.post('/api/veiculos', async (req, res) => {        delete userResponse.password;
+
+    try {
+
+        const veiculo = new Veiculo(req.body);        res.json({
+
+        await veiculo.save();            token,
+
+        res.status(201).json(veiculo);            user: userResponse,
+
+    } catch (error) {            message: 'Login realizado com sucesso'
+
+        res.status(500).json({ message: 'Erro ao criar veículo', error: error.message });        });
+
+    }    } catch (error) {
+
+});        res.status(500).json({ message: 'Erro ao fazer login', error: error.message });
+
+    }
+
+app.put('/api/veiculos/:id', async (req, res) => {});
+
+    try {
+
+        const veiculo = await Veiculo.findByIdAndUpdate(req.params.id, req.body, { new: true });// Rotas protegidas
+
+        if (!veiculo) {app.use('/api', authMiddleware);
+
+            return res.status(404).json({ message: 'Veículo não encontrado' });
+
+        }// Rotas de Veículos
+
+        res.json(veiculo);app.get('/api/veiculos', async (req, res) => {
+
+    } catch (error) {    try {
+
+        res.status(500).json({ message: 'Erro ao atualizar veículo', error: error.message });        const veiculos = await Veiculo.find();
+
+    }        res.json(veiculos);
+
+});    } catch (error) {
+
+        res.status(500).json({ message: 'Erro ao buscar veículos', error: error.message });
+
+app.delete('/api/veiculos/:id', async (req, res) => {    }
+
+    try {});
+
+        const veiculo = await Veiculo.findByIdAndDelete(req.params.id);
+
+        if (!veiculo) {app.post('/api/veiculos', async (req, res) => {
+
+            return res.status(404).json({ message: 'Veículo não encontrado' });    try {
+
+        }        const veiculo = new Veiculo(req.body);
+
+        res.json({ message: 'Veículo removido com sucesso' });        await veiculo.save();
+
+    } catch (error) {        res.status(201).json(veiculo);
+
+        res.status(500).json({ message: 'Erro ao remover veículo', error: error.message });    } catch (error) {
+
+    }        res.status(500).json({ message: 'Erro ao criar veículo', error: error.message });
+
+});    }
+
+});
+
+// Inicia o servidor
+
+app.listen(port, () => {app.put('/api/veiculos/:id', async (req, res) => {
+
+    console.log(`Servidor rodando na porta ${port}`);    try {
+
+});        const veiculo = await Veiculo.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (!veiculo) {
+            return res.status(404).json({ message: 'Veículo não encontrado' });
+        }
+        res.json(veiculo);
+    } catch (error) {
+        res.status(500).json({ message: 'Erro ao atualizar veículo', error: error.message });
+    }
+});
+
+app.delete('/api/veiculos/:id', async (req, res) => {
+    try {
+        const veiculo = await Veiculo.findByIdAndDelete(req.params.id);
+        if (!veiculo) {
+            return res.status(404).json({ message: 'Veículo não encontrado' });
+        }
+        res.json({ message: 'Veículo removido com sucesso' });
+    } catch (error) {
+        res.status(500).json({ message: 'Erro ao remover veículo', error: error.message });
+    }
+});
+
+// Inicia o servidor
+app.listen(port, () => {
+    console.log(`Servidor rodando na porta ${port}`);
+});

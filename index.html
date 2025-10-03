@@ -3,101 +3,127 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Garagem Conectada - Gerenciamento de Frota</title>
-    <link rel="stylesheet" href="css/style.css">
-    <script type="module">
-        import auth from './js/middleware/auth.js';
-        import ui from './js/ui.js';
-        
-        // Verifica autenticação
-        if (!auth.checkAuth()) {
-            window.location.href = 'login.html';
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const user = auth.getUser();
-            if (user) {
-                document.getElementById('user-name').textContent = `Olá, ${user.name}!`;
-                // Mostra mensagem de boas-vindas
-                ui.showNotification(`Bem-vindo(a) ao sistema, ${user.name}!`, 'success');
-            }
-
-            // Configura logout
-            document.getElementById('btn-logout').addEventListener('click', () => {
-                logout();
-                window.location.href = 'login.html';
-            });
-        });
-    </script>
+    <title>Garagem Conectada - Dashboard</title>
+    <link rel="stylesheet" href="css/dashboard.css">
 </head>
 <body>
+    <!-- Container de Notificações -->
+    <div id="notifications"></div>
+
+    <!-- Container Principal -->
     <div class="container">
+        <!-- Cabeçalho -->
         <header class="main-header">
-            <h1>Garagem Conectada</h1>
-            <div class="user-info">
-                <span id="user-name"></span>
-                <button id="btn-logout" class="btn-secondary">Sair</button>
+            <div class="header-content">
+                <div class="logo">
+                    <img src="https://img.icons8.com/fluency/96/parking.png" alt="Logo Garagem" />
+                    <h1>Garagem Conectada</h1>
+                </div>
+                <div class="user-info">
+                    <span id="user-name"></span>
+                    <button id="logout-button" class="btn-secondary">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                            <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
+                        </svg>
+                        Sair
+                    </button>
+                </div>
             </div>
         </header>
 
-        <div id="notificacoes-container"></div>
+        <!-- Conteúdo Principal -->
+        <main class="main-content">
+            <nav class="sidebar">
+                <ul class="nav-menu">
+                    <li class="nav-item active">
+                        <a href="#dashboard">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
+                            </svg>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#veiculos">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
+                            </svg>
+                            Veículos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#manutencoes">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                <path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"/>
+                            </svg>
+                            Manutenções
+                        </a>
+                    </li>
+                </ul>
+            </nav>
 
-        <!-- Seção Principal -->
-        <main>
-                <!-- Formulário de Login -->
-                <form id="login-form" class="auth-form">
-                    <h2>Login</h2>
-                    <div class="form-group">
-                        <label for="login-email">E-mail:</label>
-                        <input type="email" id="login-email" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="login-password">Senha:</label>
-                        <input type="password" id="login-password" required>
-                    </div>
-                    <button type="submit">Entrar</button>
-                </form>
-
-                <!-- Formulário de Registro -->
-                <form id="register-form" class="auth-form" style="display: none;">
-                    <h2>Registrar</h2>
-                    <div class="form-group">
-                        <label for="register-name">Nome:</label>
-                        <input type="text" id="register-name" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="register-email">E-mail:</label>
-                        <input type="email" id="register-email" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="register-password">Senha:</label>
-                        <input type="password" id="register-password" required minlength="6">
-                    </div>
-                    <button type="submit">Registrar</button>
-                </form>
+            <div class="content" id="main-content">
+                <!-- O conteúdo será carregado dinamicamente aqui -->
+                <div class="dashboard">
+                    <h2>Bem-vindo à Garagem Conectada!</h2>
+                    <p>Selecione uma opção no menu lateral para começar.</p>
                 </div>
             </div>
-        </div>
+        </main>
+    </div>
 
-        <!-- Conteúdo Principal (visível apenas após autenticação) -->
-        <div id="main-content" style="display: none;">
-            <!-- Cabeçalho após autenticação -->
-            <div id="app-header">
-                <div class="user-info">
-                    <span id="user-name"></span>
-                    <button id="btn-logout">Sair</button>
-                </div>
-            </div>
+    <!-- Scripts -->
+    <script>
+        // Verificar autenticação
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
 
-            <!-- Seção da Garagem -->
-            <div id="garage-section" class="section">
-                <div class="section" id="add-vehicle-section">
-                    <h2>Adicionar Veículo</h2>
-                    <form id="form-add-veiculo">
-                        <div class="form-group">
-                            <label for="veiculo-tipo">Tipo:</label>
-                            <select id="veiculo-tipo" required>
-                                <option value="Carro">Carro</option>
+        // Se não estiver autenticado, redireciona para login
+        if (!token || !user.id) {
+            window.location.href = 'login.html';
+        } else {
+            // Atualiza o nome do usuário no cabeçalho
+            document.getElementById('user-name').textContent = `Olá, ${user.name}!`;
+        }
+
+        // Configura o botão de logout
+        document.getElementById('logout-button').addEventListener('click', () => {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = 'login.html';
+        });
+
+        // Mostrar notificação de boas-vindas
+        function showNotification(message, type = 'info') {
+            const container = document.getElementById('notifications');
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+
+            const icon = document.createElement('div');
+            icon.className = 'notification-icon';
+            icon.innerHTML = type === 'error' 
+                ? '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>'
+                : '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>';
+
+            const messageElement = document.createElement('span');
+            messageElement.textContent = message;
+
+            const closeButton = document.createElement('button');
+            closeButton.className = 'notification-close';
+            closeButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>';
+            closeButton.onclick = () => notification.remove();
+
+            notification.appendChild(icon);
+            notification.appendChild(messageElement);
+            notification.appendChild(closeButton);
+            container.appendChild(notification);
+
+            setTimeout(() => notification.remove(), 5000);
+        }
+
+        // Mostra mensagem de boas-vindas
+        showNotification(`Bem-vindo(a) de volta, ${user.name}!`, 'success');
+    </script>
                                 <option value="CarroEsportivo">Carro Esportivo</option>
                                 <option value="Caminhao">Caminhão</option>
                             </select>
