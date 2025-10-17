@@ -1,22 +1,15 @@
-const { MongoClient, ServerApiVersion } = require('mongodb');
 const mongoose = require('mongoose');
 
-// IMPORTANTE: Substitua a string abaixo pela sua string de conexão!
-// E NÃO ESQUEÇA de substituir <password> pela sua senha real!
-const uri = "mongodb+srv://rickgomes:luiz20009@cluster0.x41px1z.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+// String de conexão do MongoDB
+const uri = "mongodb+srv://luizclaudiolc:luizinho123@clusterpw.i6b5pea.mongodb.net/garagem";
 
-// Cria um novo cliente MongoDB
-const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  }
-});
-
+// Conecta ao MongoDB usando Mongoose
 mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log("MongoDB conectado!"))
   .catch(err => console.error("Erro ao conectar ao MongoDB:", err));
+
+// Exporta a conexão do mongoose
+module.exports = mongoose;
 
 async function run() {
   try {

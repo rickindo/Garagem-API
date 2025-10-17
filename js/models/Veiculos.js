@@ -1,8 +1,6 @@
 // models/Veiculo.js
 const mongoose = require('mongoose');
 
-// Esta é a "planta" do seu documento no banco de dados.
-// Define os campos, tipos e regras (validações).
 const veiculoSchema = new mongoose.Schema({
     owner: {
         type: mongoose.Schema.Types.ObjectId,
@@ -12,7 +10,7 @@ const veiculoSchema = new mongoose.Schema({
     placa: { 
         type: String, 
         required: [true, 'A placa é obrigatória.'],
-        unique: true, // Garante que não teremos placas duplicadas
+        unique: true,
         uppercase: true,
         trim: true
     },

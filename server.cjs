@@ -1,19 +1,15 @@
-const express = import('express');
-const dotenv = import('dotenv');
-const cors = import('cors');
-const mongoose = import('mongoose');
-const path = import('path');
-const jwt = import('jsonwebtoken');
-const bcrypt = import('bcryptjs');
-
-const User = require('./js/models/User');
-const Veiculo = require('./js/models/Veiculos');
-
-dotenv.config();
+const express = require('express');
+const mongoose = require('mongoose');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+const cors = require('cors');
+const path = require('path');
 
 const app = express();
 const port = process.env.PORT || 3000;
-const mongoURI = process.env.MONGODB_URI || 'mongodb+srv://luizclaudiolc:luizinho123@clusterpw.i6b5pea.mongodb.net/';
+
+// Configuração do MongoDB
+const mongoURI = 'mongodb://127.0.0.1:27017/garagem';
 
 // Middlewares
 app.use(cors());
@@ -23,7 +19,11 @@ app.use(express.static(path.join(__dirname)));
 // Conexão com MongoDB
 mongoose.connect(mongoURI)
   .then(() => console.log('Conectado ao MongoDB'))
-  .catch(err => console.error('Erro ao conectar ao MongoDB:', err));
+  .catch(err => {
+    console.error('Erro ao conectar ao MongoDB:', err);
+    console.log('Verifique sua conexão com a internet e as credenciais do MongoDB');
+    process.exit(1);
+  });
 
 // Middleware de autenticação
 const authMiddleware = (req, res, next) => {
