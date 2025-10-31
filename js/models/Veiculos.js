@@ -24,7 +24,10 @@ const veiculoSchema = new mongoose.Schema({
     cor: { type: String, required: [true, 'A cor é obrigatória.'] },
 
     // Vamos adicionar o ano também, é um dado útil
-    ano: { type: Number, required: [true, 'O ano é obrigatório.'] }
+    ano: { type: Number, required: [true, 'O ano é obrigatório.'] },
+
+    // Campo para armazenar o caminho da imagem do veículo
+    imageUrl: { type: String }
 
 }, { 
     // Isso cria os campos `createdAt` e `updatedAt` automaticamente. Ajuda muito!

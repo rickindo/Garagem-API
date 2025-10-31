@@ -20,7 +20,7 @@ const auth = {
      */
     async register(userData) {
         try {
-            const response = await fetch('https://garagem-api-five.vercel.app/users/register', {
+            const response = await fetch('http://localhost:3000/users/register', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -53,7 +53,7 @@ const auth = {
      */
     async login(credentials) {
         try {
-            const response = await fetch('https://garagem-api-five.vercel.app/users/login', {
+            const response = await fetch('http://localhost:3000/users/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
